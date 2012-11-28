@@ -44,12 +44,15 @@ class MyForm(QtGui.QWidget):
                 QtCore.QThread.__init__(self)
                 self.form = form
                 self.all = all
+                self.connect(self, SIGNAL('add_log'), form.add_log, QtCore.Qt.QueuedConnection)
+                
 
             def run(self):
                 litm = self.form.ui.testcases.currentItem()
 
                 if litm or all:
                     self.form._update_buttons(True)
+                    timeStart = time.clock()
                     self.form.aborted = False
                     if not self.all:
                         self.form.ts.execute(litm.text())
@@ -59,6 +62,8 @@ class MyForm(QtGui.QWidget):
                                 break
                             litm = self.form.ui.testcases.item(i)
                             self.form.ts.execute(litm.text())
+                    timeEnd = time.clock()
+                    self.emit(SIGNAL('add_log'), 'Total execution time: %.3f seconds' % (timeEnd - timeStart))
                     self.form._update_buttons(False)
 
         self.testing = Testing(self, all)
@@ -97,7 +102,7 @@ class MyForm(QtGui.QWidget):
         self.reload_event()
 
 class TestCase(QObject):
-    def __init__(self, tcfile, form):
+    def __init__(self, tcfile, form, mm):
         """Initialization of TestCase object.
         """
         QObject.__init__(self)
@@ -108,6 +113,7 @@ class TestCase(QObject):
         self.form = form
         self.bround = None
         self.tcfile = tcfile
+        self.mm = mm
 
         self.connect(self, SIGNAL('add_log'), form.add_log, QtCore.Qt.QueuedConnection)
 
@@ -170,16 +176,15 @@ class TestCase(QObject):
         for c in range(0, 10):
             mm.SetActive(c, False)
             mm.SetSeated(c, False)
-            mm.SetCards(c, 'N', 'N')
+            mm.SetCards(c, 'NN', 'NN')
             mm.SetBalance(c, 1000.0)
             mm.SetBet(c, 0.0)
-            mm.SetFlopCards('N', 'N', 'N')
-            mm.SetTurnCard('N')
-            mm.SetRiverCard('N')
+            mm.SetFlopCards('NN', 'NN', 'NN')
+            mm.SetTurnCard('NN')
+            mm.SetRiverCard('NN')
             mm.SetTournament(True)
         for b in 'FCKRA':
             mm.SetButton(b, False)
-        time.sleep(0.5)
 
     def _configure_table(self, mm):
         """Configure MM-XMLRPC for this testcase.
@@ -221,7 +226,7 @@ class TestCase(QObject):
         for p in self.players:
             mm.SetActive(c, True)
             mm.SetSeated(c, True)
-            mm.SetCards(c, 'B', 'B')
+            mm.SetCards(c, 'BB', 'BB')
             mm.SetName(c, p)
             c += 1
         mm.Refresh()
@@ -273,7 +278,6 @@ class TestCase(QObject):
         """
         self.last_action = action
         self.add_log('Processing %s action: %s' % (self.bround, action))
-        time.sleep(0.5)
         if len(action) == 2:
             if action[1] == 'S':
                 mm.PostSB(self.players.index(action[0]))
@@ -300,7 +304,8 @@ class TestCase(QObject):
     def execute(self, hand_number = None):
         """Method used to starting testcase execution.
         """
-        mm = xmlrpclib.ServerProxy('http://localhost:9092')
+        # shortcut
+        mm = self.mm
 
         if self.status == 'not started':
             if hand_number:
@@ -333,10 +338,12 @@ class TestCase(QObject):
                 self.handle_button(button, betsize)
         self.status = 'done'
 
+
     def handle_button(self, button, betsize):
         """Handler for button click send by OH.
         """
-        mm = xmlrpclib.ServerProxy('http://localhost:9092')
+        # shortcut
+        mm = self.mm
 
         # NOTE: be careful!
 
@@ -435,7 +442,7 @@ class TestSuite(QObject):
         self.tc_dir = directory
 
         self.tc = None
-
+        
         self.load_testcases()
         self.hand_number = 0
 
@@ -443,6 +450,9 @@ class TestSuite(QObject):
         self.connect(self, SIGNAL('add_log'), form.add_log, QtCore.Qt.QueuedConnection)
         self.connect(self, SIGNAL('network_error'), form.network_error, QtCore.Qt.QueuedConnection)
 
+        self.mm = xmlrpclib.ServerProxy('http://localhost:9092')
+
+        
     def network_error(self):
         self.emit(SIGNAL('network_error'))
 
@@ -450,7 +460,7 @@ class TestSuite(QObject):
         self.tc_files = [file for file in os.listdir(self.tc_dir) if file[-4:] == '.txt' or file[-3:] == '.pa']
 
     def execute(self, tcf):
-        self.tc = TestCase(os.path.join(self.tc_dir, str(tcf)), self.form)
+        self.tc = TestCase(os.path.join(self.tc_dir, str(tcf)), self.form, self.mm)
         self.hand_number += 1
 
         try:
@@ -458,15 +468,11 @@ class TestSuite(QObject):
         except socket.error:
             self.network_error()
 
-        while self.tc.status != 'done':
-            time.sleep(0.5)
-
     def stop(self):
         self.tc.aborted = True
 
         try:
-            mm = xmlrpclib.ServerProxy('http://localhost:9092')
-            mm.CancelGetAction()
+            self.mm.CancelGetAction()
         except socket.error:
             pass
 
