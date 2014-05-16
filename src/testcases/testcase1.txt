@@ -1,3 +1,7 @@
+# comment
+# bam 
+# bu
+
 [preflop]
 Hand = 5h, 6c
 Actions = Saxum S, Erasmus B, Anders F, Ginger R, Bot can FCR do C, Crusoe F, OgoPogo F, Hari F, Sanja F, Hooke F, Saxum F, Erasmus F
