@@ -1,4 +1,4 @@
-import ConfigParser
+import configparser
 
 class TxtParser(object):
     def __init__(self, tcfile):
@@ -23,7 +23,7 @@ class TxtParser(object):
         return actions
 
     def _parse(self, tcfile):
-        self.config = ConfigParser.SafeConfigParser()
+        self.config = configparser.SafeConfigParser()
         self.config.read(tcfile)
 
         config = self.config # shortcut
@@ -83,7 +83,7 @@ class TxtParser(object):
         for t in (sblind, bblind, bbet, ante, gtype, network, tournament, balances):
             try:
                 t()
-            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as e:
+            except (configparser.NoSectionError, configparser.NoOptionError) as e:
                 if e.section == 'table':
                     pass # this is optional
                 else:

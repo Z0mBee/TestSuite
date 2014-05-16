@@ -1,7 +1,7 @@
 import os
 import sys
 import time
-import xmlrpclib
+import xmlrpc.client
 import socket
 
 from gen import Ui_Form
@@ -9,7 +9,7 @@ from PyQt4 import QtCore, QtGui
 from PyQt4.QtGui import QTextCursor
 from PyQt4.QtCore import SIGNAL, QObject, QString
 
-from itertools import izip
+
 
 from parsers.txtparser import TxtParser
 from parsers.paparser import PaParser
@@ -92,7 +92,7 @@ class MyForm(QtGui.QWidget):
 
             self.ts = TestSuite(str(self.ui.directory.displayText()), self)
             for tcf in self.ts.tc_files:
-                self.ui.testcases.addItem(unicode(tcf))
+                self.ui.testcases.addItem(str(tcf))
 
     def add_log(self, message):
         self.ui.logs.append(message)
@@ -450,7 +450,7 @@ class TestSuite(QObject):
         self.connect(self, SIGNAL('add_log'), form.add_log, QtCore.Qt.QueuedConnection)
         self.connect(self, SIGNAL('network_error'), form.network_error, QtCore.Qt.QueuedConnection)
 
-        self.mm = xmlrpclib.ServerProxy('http://localhost:9092')
+        self.mm = xmlrpc.client.ServerProxy('http://localhost:9092')
 
         
     def network_error(self):

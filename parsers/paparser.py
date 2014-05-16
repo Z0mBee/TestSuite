@@ -67,7 +67,7 @@ class PaParser(object):
 
         def get_history(pc, actions):
             history = []
-            for player, action in izip(pc, actions):
+            for player, action in zip(pc, actions):
                 if action == 'F':
                     pc.remove(player)
                 if player == self.hero:
