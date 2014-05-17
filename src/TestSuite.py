@@ -161,12 +161,12 @@ class TestCase(QObject):
         fd.close()
 
     def _parse_txt(self, tcfile):
-        """Parse testcase file using txt parser.
+        """Parse testcase file using txt parsers.
         """
         self.parser = TxtParser(tcfile)
 
     def _parse_pa(self, tcfile):
-        """Parse testcase file using poker academy parser.
+        """Parse testcase file using poker academy parsers.
         """
         self.parser = PaParser(tcfile)
 
