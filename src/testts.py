@@ -1,4 +1,9 @@
-from parser.tcparser import TestcaseParser
+from parsers.tcparser import TestcaseParser
+from autoplayer import AutoPlayer
 
-parser = TestcaseParser("testcases/testcase1.txt")
-parser.parse()
+tc = TestcaseParser("testcases/testcase1.txt")
+tc.parse()
+
+
+aPlayer = AutoPlayer()
+aPlayer.startTest(tc)

@@ -3,16 +3,17 @@
 # bu
 
 [table]
-sblind = 0.5
+sblind = 0.05
+bblind = 0.10
 bbet = 2
 ante = 0
-gtype = FL
+gtype = NL
 network = Everest
 tournament = True
 balances = Ginger 1500, Bot 500
 
 [preflop]
-Hand = 5h, 6c
+Hand = 5h, Tc
 Actions = Saxum S, Erasmus B, Anders F, Ginger R, Bot can FCR do C, Crusoe F, OgoPogo F, Hari F, Sanja F, Hooke F, Saxum F, Erasmus F
 
 [flop]
