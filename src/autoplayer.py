@@ -1,3 +1,4 @@
+import time
 import xmlrpc.client
 
 class AutoPlayer(object):
@@ -12,9 +13,14 @@ class AutoPlayer(object):
         self.mm = xmlrpc.client.ServerProxy('http://localhost:9092') 
         
     def startTest(self,tc):
+              
+       
+            
+        self.aborted = False
         
         #init table
         self._resetTable()
+        self._configureTable(tc)
         self._addPlayers(tc.players)
         self._setHero(tc.players.index(tc.hero), tc.heroHand[0], tc.heroHand[1]) # hero default at pos 0
         
@@ -24,10 +30,30 @@ class AutoPlayer(object):
             # dealer is sitting before SB
             dealer = tc.players[tc.players.index(sb) - 1]
         else:
-            # delaer is SB
+            # dealer is SB
             dealer = sb
             
         self._setDealer(tc.players.index(dealer))
+        
+        for action in tc.pfActions:
+            self._doAction(action,tc)
+            
+        if tc.flopCards:
+            self.mm.SetFlopCards(tc.flopCards[0], tc.flopCards[1], tc.flopCards[2])
+            for action in tc.flopActions:
+                self._doAction(action, tc)
+                
+        if tc.turnCard:
+            self.mm.SetTurnCard(tc.turnCard)
+            for action in tc.turnActions:
+                self._doAction(action, tc)
+            
+        if tc.riverCard:
+            self.mm.SetRiverCard(tc.riverCard)
+            for action in tc.riverActions:
+                self._doAction(action, tc)
+        
+        
         
     def _resetTable(self):
         """Reset table """
@@ -44,54 +70,90 @@ class AutoPlayer(object):
             self.mm.SetTournament(True)
         for b in 'FCKRA':
             self.mm.SetButton(b, False)
+        time.sleep(0.5)
             
     def _configureTable(self, tc):
         """Configure table for this testcase """
 
         if tc.sblind:
-            self.mm.SetSBlind(self.tc.sblind)
+            self.mm.SetSBlind(tc.sblind)
         if tc.bblind:
-            self.mm.SetBBlind(self.tc.bblind)
+            self.mm.SetBBlind(tc.bblind)
         if tc.bbet:
-            self.mm.SetBBet(self.tc.bbet)
+            self.mm.SetBBet(tc.bbet)
         if tc.ante:
-            self.mm.SetAnte(self.tc.ante)
+            self.mm.SetAnte(tc.ante)
         if tc.gtype:
-            self.mm.SetGType(self.tc.gtype)
+            self.mm.SetGType(tc.gtype)
         if tc.network:
-            self.mm.SetNetwork(self.tc.network)
+            self.mm.SetNetwork(tc.network)
         if tc.tournament:
-            self.mm.SetTournament(self.tc.tournament)
+            self.mm.SetTournament(tc.tournament)
         if tc.balances:
-            for player, balance in self.tc.balances:
-                self.mm.SetBalance(self.players.index(player), float(balance))
+            for player, balance in tc.balances:
+                self.mm.SetBalance(tc.players.index(player), float(balance))
                 
         self.mm.Refresh()
         
-    def _doAction(self, action):
+    def _doAction(self, action, tc):
         """Do single action on the table. """
+        if(self.aborted):
+            return
         
+        time.sleep(0.5)
         if len(action) == 2:
             if action[1] == 'S':
-                self.mm.PostSB(self.players.index(action[0]))
+                self.mm.PostSB(tc.players.index(action[0]))
             elif action[1] == 'B':
-                self.mm.PostBB(self.players.index(action[0]))
+                self.mm.PostBB(tc.players.index(action[0]))
             elif action[1] == 'C':
-                self.mm.DoCall(self.players.index(action[0]))
+                self.mm.DoCall(tc.players.index(action[0]))
             elif action[1] == 'R':
-                self.mm.DoRaise(self.players.index(action[0]))
+                self.mm.DoRaise(tc.players.index(action[0]))
             elif action[1] == 'F':
-                self.mm.DoFold(self.players.index(action[0]))
+                self.mm.DoFold(tc.players.index(action[0]))
+            elif action[1] == 'K':
+                pass
             else:
                 raise ValueError("Unknown action: " + action[1])
         elif len(action) == 3:
             if action[1] == 'R':
-                self.mm.DoRaise(self.players.index(action[0]),float(action[2]))
-            return False
+                self.mm.DoRaise(tc.players.index(action[0]),float(action[2]))
+            else:
+                raise ValueError("Unknown action: " + action[1])
         else:
             # it's heroes turn -> show buttons
             for b in action[2]:
                 self.mm.SetButton(b, True)
+                
+            result = self.mm.GetAction()
+            button = result['button']
+            betsize = result['betsize']
+            print("Button: {0}  betsize: {1}".format(button,betsize))
+            self._resetButtons()
+            self.handleHeroAction(button,betsize,tc)
+        self.mm.Refresh()
+            
+            
+    def handleHeroAction(self, button, betsize,tc):
+
+        if button == 'F':
+            self.mm.DoFold(tc.players.index(tc.hero))
+            # Abort testcase after bot fold
+            self.aborted = True
+        elif button == 'C':
+            self.mm.DoCall(tc.players.index(tc.hero))
+        elif button == 'K':
+            pass
+        elif button == 'R': # min raise
+            self.mm.DoRaise(tc.players.index(tc.hero))
+        elif button == 'A': # allin or swag
+            if betsize:
+                self.mm.DoRaise(tc.players.index(tc.hero), float(betsize))
+            else:
+                self.mm.DoAllin(tc.players.index(tc.hero))
+        self.mm.Refresh()
+
                 
     def _addPlayers(self,players):
         """Add players from testcase to the table."""
@@ -102,6 +164,10 @@ class AutoPlayer(object):
             self.mm.SetCards(c, 'BB', 'BB')
             self.mm.SetName(c, p)
         self.mm.Refresh()
+        
+    def _resetButtons(self):
+        for b in 'FCKRA':
+            self.mm.SetButton(b, False)
         
     def _setHero(self, pos, card1, card2):
         self.mm.SetCards(pos, card1, card2)

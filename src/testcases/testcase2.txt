@@ -1,8 +1,22 @@
+[table]
+sblind = 1
+bblind = 2
+gtype = NL
+tournament = false
+balances = P0 200,P1 200,P2 200, P3 200, P4 200,P5 200,P6 200,P7 200, P8 200,Bot 200 
+
 [preflop]
-Hand = 2s, 6c
-Actions = Anders S, Ginger B, Bot can CRF do C, Crusoe F, OgoPogo R, Hari F, Sanja R, Hooke F, Saxum F, Erasmus F, Anders F, Ginger F, Bot can CRF do C, OgoPogo R, Sanja C, Bot can CRF do C
+Hand = Ac, 5c
+Actions = P0 S,P1 B,P2 F,P3 F,P4 F,P5 F,P6 F, P7 F,P8 F,Bot can FCA do (R 5),P0 F, P1 C 
 
 [flop]
-Cards = Th, 5s, 2c
-Actions = Bot can CRF do C, OgoPogo C, Sanja R, Bot can CRF do F
+Cards = As, 3d, 6h
+Actions = P1 K, Bot can FKA do K
 
+[turn]
+Card = 9h
+Actions = P1 K, Bot can FKA do R 8, P1 C
+
+[river]
+Card = Kd
+Actions = P1 K, Bot can FKA do R 14
