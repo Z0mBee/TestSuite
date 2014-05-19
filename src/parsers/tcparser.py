@@ -30,19 +30,37 @@ class TestcaseParser(object):
         self.tcfile = tcfile;
 
 
-    def _parseActions(self, configText):
+    def _parseActions(self, actionLine):
         actions = []
-        for act in configText.split(','):
-            act = act.strip()
-            if(not self._validAction(act)):
-                raise ParserException("Invalid action: " + act)
+        for act in self._nextActionToken(actionLine):
+            act = act.replace(")","").replace("(","").strip()
+            #if(not self._validAction(act)):
+            #    raise ParserException("Invalid action: " + act)
             act = act.split(' ')
-            actions.append(act)
+            actions.append([a for a in act if a])
         return actions
+    
+    def _nextActionToken(self, actionLine):
+        
+        iterObj = iter(actionLine.split(','))
+
+        while iterObj:
+            try:
+                token = iterObj.__next__()
+                if not "(" in token:
+                    yield token
+                else:
+                    while not ")" in token:
+                        token += iterObj.__next__()
+                    
+                    yield token
+            except StopIteration:
+                break
+                
     
     def _validAction(self,action):
         return (re.match(r"^[_a-zA-Z]{1}[\S]* (([FKCASB]{1})|(R( [0-9]+)?))$",action)
-                or re.match(r"^[_a-zA-Z]{1}[\S]* can [FKCRA]+ do (([FKCASB]{1})|(R( [0-9]+)?))$",action))
+                or re.match(r"^[_a-zA-Z]{1}[\S]* can [FKCRA]+ do (([FKCASB]{1})|(R( [0-9]+)?))+$",action))
     
     def _validCard(self,card):
         return re.match(r"^[2-9TJQKA]{1}[hsdc]{1}$",card)
@@ -82,6 +100,11 @@ class TestcaseParser(object):
                 self.players.append(playerAction[0])
             if len(playerAction) > 3:
                 self.hero = playerAction[0]
+                
+        # put hero at pos 0
+        for i in range(0, len(self.players) - self.players.index(self.hero)):
+            p = self.players.pop()
+            self.players.insert(0, p)
                 
         
     def _parsePostflop(self,config):
