@@ -2,9 +2,7 @@ import time
 import xmlrpc.client
 
 class AutoPlayer(object):
-    """
-    Connects to manual mode and peforms actions
-    """
+    """ Connects to manual mode, configures the table and peforms actions."""
 
     def __init__(self):
         self._connect()
@@ -14,27 +12,11 @@ class AutoPlayer(object):
         
     def startTest(self,tc):
               
-       
+        self._initTable(tc):
+        self._performActions(tc):
             
-        self.aborted = False
         
-        #init table
-        self._resetTable()
-        self._configureTable(tc)
-        self._addPlayers(tc.players)
-        self._setHero(tc.players.index(tc.hero), tc.heroHand[0], tc.heroHand[1]) # hero default at pos 0
-        
-        sb = tc.pfActions[0][0]
-
-        if len(tc.players) > 2:
-            # dealer is sitting before SB
-            dealer = tc.players[tc.players.index(sb) - 1]
-        else:
-            # dealer is SB
-            dealer = sb
-            
-        self._setDealer(tc.players.index(dealer))
-        
+    def _performActions(self, tc):
         for action in tc.pfActions:
             self._doAction(action,tc)
             
@@ -52,11 +34,33 @@ class AutoPlayer(object):
             self.mm.SetRiverCard(tc.riverCard)
             for action in tc.riverActions:
                 self._doAction(action, tc)
+    
+    def _initTable(self, tc):
+        """ Initialize the table with all start values"""
         
+        self.aborted = False
+        self._resetTable()
+        self._configureTable(tc)
+        self._addPlayers(tc.players)
+        # set hero
+        self.mm.SetCards(tc.players.index(tc.hero), tc.heroHand[0], tc.heroHand[1])
         
+        # sb is always player with first pf action
+        sb = tc.pfActions[0][0]
+
+        if len(tc.players) > 2:
+            # dealer is sitting before SB
+            dealer = tc.players[tc.players.index(sb) - 1]
+        else:
+            # dealer is SB
+            dealer = sb
+            
+        self.mm.SetDealer(tc.players.index(dealer))
+        self.mm.Refresh()
         
     def _resetTable(self):
-        """Reset table """
+        """Reset all table values"""
+        
         for c in range(0, 10):
             self.mm.SetActive(c, False)
             self.mm.SetSeated(c, False)
@@ -70,6 +74,7 @@ class AutoPlayer(object):
             self.mm.SetTournament(True)
         for b in 'FCKRA':
             self.mm.SetButton(b, False)
+        self.mm.Refresh()
         time.sleep(0.5)
             
     def _configureTable(self, tc):
@@ -122,11 +127,12 @@ class AutoPlayer(object):
             else:
                 raise ValueError("Unknown action: " + action[1])
         else:
-            # it's heroes turn -> show buttons
+            # it's heroes turn
+            #-> show buttons
             for b in action[2]:
                 self.mm.SetButton(b, True)
                 
-            result = self.mm.GetAction()
+            result = self.mm.GetAction() # get performed action from manual mode
             button = result['button']
             betsize = result['betsize']
             print("Button: {0}  betsize: {1}".format(button,betsize))
@@ -136,6 +142,7 @@ class AutoPlayer(object):
             
             
     def handleHeroAction(self, button, betsize,tc):
+        """ Perform hero action in manual mode"""
 
         if button == 'F':
             self.mm.DoFold(tc.players.index(tc.hero))
@@ -157,7 +164,6 @@ class AutoPlayer(object):
                 
     def _addPlayers(self,players):
         """Add players from testcase to the table."""
-
         for c,p in enumerate(players):
             self.mm.SetActive(c, True)
             self.mm.SetSeated(c, True)
@@ -168,10 +174,5 @@ class AutoPlayer(object):
     def _resetButtons(self):
         for b in 'FCKRA':
             self.mm.SetButton(b, False)
-        
-    def _setHero(self, pos, card1, card2):
-        self.mm.SetCards(pos, card1, card2)
 
-    def _setDealer(self, pos):
-        self.mm.SetDealer(pos)
         
