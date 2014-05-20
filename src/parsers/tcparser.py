@@ -31,41 +31,68 @@ class TestcaseParser(object):
 
 
     def _parseActions(self, actionLine):
+        """ Parse action line in single actions and check if all actions are valid"""
+        
         actions = []
-        for act in self._nextActionToken(actionLine):
-            act = act.replace(")","").replace("(","").strip()
-            #if(not self._validAction(act)):
-            #    raise ParserException("Invalid action: " + act)
-            act = act.split(' ')
-            actions.append([a for a in act if a])
+        for action in self._nextActionToken(actionLine):
+            # remove parenthesis and whitespaces
+            action = action.replace(")","").replace("(","").strip()
+            
+            # split by whitespace and remove empty whitespace parts
+            actionParts = a for action.split(' ') if a 
+            if(not self._validAction(actionParts)):
+                raise ParserException("Invalid action: " + action)
+            
+            actions.append(actionParts)
         return actions
     
     def _nextActionToken(self, actionLine):
+        """ Return next action token seperated by comma """
         
         iterObj = iter(actionLine.split(','))
-
+        # iterate manually over tokens in order to merge splited tokens in parenthesis again
         while iterObj:
             try:
                 token = iterObj.__next__()
                 if not "(" in token:
                     yield token
+                # if left parenthesis found -> add tokens until right parenthesis found
                 else:
                     while not ")" in token:
                         token += iterObj.__next__()
-                    
                     yield token
+                    
             except StopIteration:
                 break
                 
     
-    def _validAction(self,action):
-        return (re.match(r"^[_a-zA-Z]{1}[\S]* (([FKCASB]{1})|(R( [0-9]+)?))$",action)
-                or re.match(r"^[_a-zA-Z]{1}[\S]* can [FKCRA]+ do (([FKCASB]{1})|(R( [0-9]+)?))+$",action))
-    
-    def _validCard(self,card):
+    def _validAction(self, actionParts):
+        """Checks if all parts of an action are valid"""
+        
+        if(len(actionParts) >= 2):
+            # name
+            if not re.match(r"[_a-zA-Z]{1}[\S]*", actionParts[0])
+                return false
+            
+            # opponent action
+            if len(actionParts) == 2:   
+                return re.match(r"([FKCASB]{1})|(R( [0-9]+)?)",actionParts[1])
+            # hero action
+            else if len(actionParts) >= 4:
+                
+                if(actionParts[1] == "can" and actionParts[3] = "do" and re.match(r"[FKCRA]+",actionParts[2])
+                    for a in actionParts(4:)
+                        if not re.match(r"([FKCA]{1})|(R( [0-9]+)?)":
+                            return false
+                    return true
+        return false
+
+    def _validCard(self, card):
+        """ Checks if the card is a valid poker card """
         return re.match(r"^[2-9TJQKA]{1}[hsdc]{1}$",card)
 
     def parse(self):
+        """ Start parsing the config file"""
         
         try:     
             config = SafeConfigParser()
@@ -79,11 +106,13 @@ class TestcaseParser(object):
                           
             self._parseConfig(config)
              
-    
+        # map all exceptions to parser exception
         except Exception as e:
             raise ParserException(e)
         
     def _parsePreflop(self,config):
+        """Parse the preflop section"""
+        
         #preflop section
         self.pfActions = self._parseActions(config.get('preflop', 'actions'))
         self.heroHand = [c.strip() for c in config.get('preflop', 'hand').split(',')]
@@ -108,6 +137,8 @@ class TestcaseParser(object):
                 
         
     def _parsePostflop(self,config):
+        """Parse all postflop sections"""
+        
         #flop section
         if(config.has_section('flop')):
             self.flopActions = self._parseActions(config.get('flop', 'actions'))
