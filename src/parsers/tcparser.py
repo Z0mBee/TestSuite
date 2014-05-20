@@ -2,7 +2,7 @@ import os
 import re
 from configparser import SafeConfigParser
 
-class TestcaseParser(object):
+class TestCaseParser(object):
     """ Parses testcase from txt config file"""
     
     def __init__(self, tcfile):
@@ -39,7 +39,7 @@ class TestcaseParser(object):
             action = action.replace(")","").replace("(","").strip()
             
             # split by whitespace and remove empty whitespace parts
-            actionParts = a for action.split(' ') if a 
+            actionParts = [a for a in action.split(' ') if a] 
             if(not self._validAction(actionParts)):
                 raise ParserException("Invalid action: " + action)
             
@@ -71,21 +71,25 @@ class TestcaseParser(object):
         
         if(len(actionParts) >= 2):
             # name
-            if not re.match(r"[_a-zA-Z]{1}[\S]*", actionParts[0])
-                return false
+            if not re.match(r"[_a-zA-Z]{1}[\S]*", actionParts[0]):
+                return False
             
             # opponent action
             if len(actionParts) == 2:   
-                return re.match(r"([FKCASB]{1})|(R( [0-9]+)?)",actionParts[1])
+                return re.match(r"[FKCASB]{1}",actionParts[1])
+            elif len(actionParts) == 2:   
+                return re.match(r"[0-9]+",actionParts[2]) and actionParts[1] == "R"
             # hero action
-            else if len(actionParts) >= 4:
+            elif len(actionParts) >= 4:
                 
-                if(actionParts[1] == "can" and actionParts[3] = "do" and re.match(r"[FKCRA]+",actionParts[2])
-                    for a in actionParts(4:)
-                        if not re.match(r"([FKCA]{1})|(R( [0-9]+)?)":
-                            return false
-                    return true
-        return false
+                if(actionParts[1] == "can" and actionParts[3] == "do" and re.match(r"[FKCRA]+",actionParts[2])):
+                    lastAction = None
+                    for a in actionParts[4:]:
+                        if (not re.match(r"[FKCRA]{1}",a)) and (not ((re.match(r"[0-9]+",a) and lastAction == "R"))):
+                            return False
+                        lastAction = a
+                    return True
+        return False
 
     def _validCard(self, card):
         """ Checks if the card is a valid poker card """
