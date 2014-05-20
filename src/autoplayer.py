@@ -12,8 +12,8 @@ class AutoPlayer(object):
         
     def startTest(self,tc):
               
-        self._initTable(tc):
-        self._performActions(tc):
+        self._initTable(tc)
+        self._performActions(tc)
             
         
     def _performActions(self, tc):

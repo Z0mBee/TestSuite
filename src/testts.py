@@ -5,5 +5,5 @@ tc = TestcaseParser("testcases/testcase2.txt")
 tc.parse()
 
 
-#aPlayer = AutoPlayer()
-#aPlayer.startTest(tc)
+aPlayer = AutoPlayer()
+aPlayer.startTest(tc)
