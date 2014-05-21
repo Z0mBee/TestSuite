@@ -1,8 +1,9 @@
 import os
 import re
 from configparser import SafeConfigParser
+from PyQt4.Qt import QObject
 
-class TestCaseParser(object):
+class TestCaseParser(QObject):
     """ Parses testcase from txt config file"""
     
     def __init__(self, tcfile):
@@ -76,8 +77,8 @@ class TestCaseParser(object):
             
             # opponent action
             if len(actionParts) == 2:   
-                return re.match(r"[FKCASB]{1}",actionParts[1])
-            elif len(actionParts) == 2:   
+                return re.match(r"[FKCRASB]{1}",actionParts[1])
+            elif len(actionParts) == 3:   
                 return re.match(r"[0-9]+",actionParts[2]) and actionParts[1] == "R"
             # hero action
             elif len(actionParts) >= 4:

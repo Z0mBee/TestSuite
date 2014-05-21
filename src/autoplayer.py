@@ -1,11 +1,14 @@
 import time
 import xmlrpc.client
+from PyQt4.Qt import QObject, SIGNAL
 
-class AutoPlayer(object):
+class AutoPlayer(QObject):
     """ Connects to manual mode, configures the table and peforms actions."""
 
-    def __init__(self):
+    def __init__(self, window):
+        QObject.__init__(self)
         self._connect()
+        self.window = window
         
     def _connect(self):
         self.mm = xmlrpc.client.ServerProxy('http://localhost:9092') 
@@ -17,20 +20,26 @@ class AutoPlayer(object):
             
         
     def _performActions(self, tc):
+        
+        
+        self.emit(SIGNAL('logMessage'), "Preflop - Cards : {0}, {1}".format(tc.heroHand[0], tc.heroHand[1]))
         for action in tc.pfActions:
             self._doAction(action,tc)
-            
+                   
         if tc.flopCards:
+            self.emit(SIGNAL('logMessage'), "Flop - Cards : {0}, {1}, {2}".format(tc.flopCards[0],tc.flopCards[1],tc.flopCards[2])) 
             self.mm.SetFlopCards(tc.flopCards[0], tc.flopCards[1], tc.flopCards[2])
             for action in tc.flopActions:
                 self._doAction(action, tc)
                 
         if tc.turnCard:
+            self.emit(SIGNAL('logMessage'), "Turn - Card : {0}".format(tc.turnCard)) 
             self.mm.SetTurnCard(tc.turnCard)
             for action in tc.turnActions:
                 self._doAction(action, tc)
             
         if tc.riverCard:
+            self.emit(SIGNAL('logMessage'), "River - Card : {0}".format(tc.riverCard)) 
             self.mm.SetRiverCard(tc.riverCard)
             for action in tc.riverActions:
                 self._doAction(action, tc)
@@ -56,7 +65,6 @@ class AutoPlayer(object):
             dealer = sb
             
         self.mm.SetDealer(tc.players.index(dealer))
-        self.mm.Refresh()
         
     def _resetTable(self):
         """Reset all table values"""
@@ -97,14 +105,13 @@ class AutoPlayer(object):
         if tc.balances:
             for player, balance in tc.balances:
                 self.mm.SetBalance(tc.players.index(player), float(balance))
-                
-        self.mm.Refresh()
         
     def _doAction(self, action, tc):
         """Do single action on the table. """
         if(self.aborted):
             return
         
+        self.emit(SIGNAL('logMessage'), "Action: " + str(action))
         time.sleep(0.5)
         if len(action) == 2:
             if action[1] == 'S':
@@ -135,7 +142,6 @@ class AutoPlayer(object):
             result = self.mm.GetAction() # get performed action from manual mode
             button = result['button']
             betsize = result['betsize']
-            print("Button: {0}  betsize: {1}".format(button,betsize))
             self._resetButtons()
             self.handleHeroAction(button,betsize,tc)
         self.mm.Refresh()
