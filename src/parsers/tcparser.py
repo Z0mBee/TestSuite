@@ -7,6 +7,8 @@ class TestCaseParser(QObject):
     """ Parses testcase from txt config file"""
     
     def __init__(self, tcfile):
+        QObject.__init__(self)
+        
         self.sblind = None
         self.bblind = None
         self.bbet = None
@@ -95,6 +97,10 @@ class TestCaseParser(QObject):
     def _validCard(self, card):
         """ Checks if the card is a valid poker card """
         return re.match(r"^[2-9TJQKA]{1}[hsdc]{1}$",card)
+    
+    def _validPlayerBalance(self, playerBalance):
+        """ Checks if it is a valid player balance """
+        return re.match(r"^[_a-zA-Z]{1}[\S]*[\s]*[0-9]+$",playerBalance)
 
     def parse(self):
         """ Start parsing the config file"""
@@ -203,8 +209,13 @@ class TestCaseParser(QObject):
             if(config.has_option('table','tournament')):
                 self.tournament = config.getboolean('table', 'tournament')
             if(config.has_option('table','balances')):
-                balances = config.get('table', 'balances')
-            self.balances = [b.split() for b in balances.split(',')]
+                balances = config.get('table', 'balances').split(",")
+                
+                for balance in balances: 
+                    balance = balance.strip()   
+                    if(not self._validPlayerBalance(balance)):
+                        raise ParserException("Invalid player balance: " + balance) 
+                    self.balances.append(balance.split())
             
             
 class ParserException(Exception):

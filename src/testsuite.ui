@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>images/list_accept.png</normaloff>images/list_accept.png</iconset>
+    <normaloff>images/applications_games.png</normaloff>images/applications_games.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_6">
@@ -32,6 +32,19 @@
         <layout class="QVBoxLayout" name="verticalLayout">
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout">
+           <item>
+            <spacer name="horizontalSpacer_5">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>0</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
            <item>
             <widget class="QPushButton" name="buttonAdd">
              <property name="text">
@@ -59,6 +72,19 @@
               <string>Load</string>
              </property>
             </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_4">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>0</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
            </item>
           </layout>
          </item>
@@ -92,6 +118,9 @@
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
           <widget class="QPushButton" name="buttonExecute">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="text">
             <string>Execute</string>
            </property>
@@ -99,6 +128,9 @@
          </item>
          <item>
           <widget class="QPushButton" name="buttonExecuteAll">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="text">
             <string>Execute All</string>
            </property>
@@ -106,6 +138,9 @@
          </item>
          <item>
           <widget class="QPushButton" name="buttonStop">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="text">
             <string>Stop</string>
            </property>
@@ -168,8 +203,29 @@
            </item>
            <item>
             <widget class="QSlider" name="sliderSpeed">
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
+             </property>
+             <property name="maximum">
+              <number>2000</number>
+             </property>
+             <property name="singleStep">
+              <number>200</number>
+             </property>
+             <property name="pageStep">
+              <number>200</number>
+             </property>
+             <property name="value">
+              <number>500</number>
+             </property>
+             <property name="sliderPosition">
+              <number>500</number>
+             </property>
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="tickPosition">
+              <enum>QSlider::NoTicks</enum>
              </property>
             </widget>
            </item>

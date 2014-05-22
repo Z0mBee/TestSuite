@@ -1,0 +1,21 @@
+[table]
+sblind = 1
+bblind = 2
+gtype = NL
+balances = P0 200,P1 200,P2 200, P3 200, P4 200,P5 200,P6 200,Bot 200 ,P7 200, P8 200
+
+[preflop]
+Hand = Jh, Th
+Actions = P0 S,P1 B,P2 F,P3 F,P4 F,P5 F,P6 F,Bot can FCRA do R 6, P7 F,P8 C,P0 F, P1 F 
+
+[flop]
+Cards = Qc, Kc, 5h
+Actions = Bot can FKRA do R 11, P8 C
+
+[turn]
+Card = 6h
+Actions = Bot can FKRA do R 28, P8 C
+
+[river]
+Card = 3d
+Actions = Bot can FKRA do K, P8 R 25,Bot can FCRA do F
