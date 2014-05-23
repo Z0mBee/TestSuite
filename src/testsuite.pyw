@@ -17,13 +17,14 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
         self.setupUi(self)         
         self._connectSignals()      
         self._loadIcons()     
-
-
     
     def _connectSignals(self):
         self.connect(self.buttonAdd,SIGNAL("clicked()"), self.addTestCases)
         self.connect(self.buttonExecute,SIGNAL("clicked()"), self.startExecutingTestCases)
         self.connect(self.buttonExecuteAll,SIGNAL("clicked()"), self.startExecutingAllTestCases)
+        self.connect(self.buttonNew,SIGNAL("clicked()"), self.newTestCollection)
+        self.connect(self.buttonLoad,SIGNAL("clicked()"), self.loadTestCollection)
+        self.connect(self.buttonSave,SIGNAL("clicked()"), self.saveTestCollection)
         self.connect(self.buttonStop,SIGNAL("clicked()"), self.stopExecuting)
         self.connect(self.listTestCollection,SIGNAL("itemDoubleClicked(QListWidgetItem *)"), self.itemDoubleClicked)
         delKey = QShortcut(QKeySequence(Qt.Key_Delete), self.listTestCollection)
@@ -126,6 +127,37 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
             item.setIcon(self.iconFailed)
         elif(icon == ItemIcon.SUCCESS):
             item.setIcon(self.iconSuccess)
+            
+    
+    def saveTestCollection(self):
+        outputFile = QFileDialog.getSaveFileName(self, "Select file", ".", "Test collection file (*.tc)")
+        if(outputFile):
+            
+            if self.listTestCollection.count() == 0:
+                return
+            
+            tcContent = ""
+            items = [self.listTestCollection.item(i) for i in range(self.listTestCollection.count())]
+            for item in items:
+                path = item.data(Qt.UserRole)
+                tcContent += path + "\n"
+            with open(outputFile,'w') as file:
+                file.write(tcContent)
+    
+    
+    def loadTestCollection(self):
+        inputFile = QFileDialog.getOpenFileName(self, "Select file", ".", "Test collection file (*.tc)")
+        if(inputFile):
+            fNames = []
+            with open(inputFile) as file:
+                for line in file:
+                    fNames.append(line.replace("\n",""))
+            self.listTestCollection.clear()
+            self._addTestCasesToList(fNames)
+    
+    def newTestCollection(self):
+        self.listTestCollection.clear()
+    
 
                
 def startGUI():
