@@ -1,2 +1,1 @@
-setup.py py2exe
-pause
+python setup.py build

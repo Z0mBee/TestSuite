@@ -14,10 +14,10 @@ class AutoPlayer(QObject):
     def _connect(self):
         self.mm = xmlrpc.client.ServerProxy('http://localhost:9092') 
 
-    def startTest(self,tc):
+    def startTest(self,tc,handNumber):
         
         self.testFailed = False 
-        self._initTable(tc)
+        self._initTable(tc, handNumber)
         self._performActions(tc)
         
         if self.testFailed:
@@ -30,6 +30,7 @@ class AutoPlayer(QObject):
         self.testFailed = True
         
     def _performActions(self, tc):
+        """ Perform preflop and postflop actions """
            
         if self.aborted:
                 return;
@@ -63,13 +64,17 @@ class AutoPlayer(QObject):
                     return;
                 self._doAction(action, tc)
     
-    def _initTable(self, tc):
+    def _initTable(self, tc, handNumber):
         """ Initialize the table with all start values"""
         
         self.aborted = False
         self._resetTable()
         self._configureTable(tc)
         self._addPlayers(tc.players)
+        
+        #set hand number
+        self.mm.SetHandNumber(handNumber)
+        
         # set hero
         self.mm.SetCards(tc.players.index(tc.hero), tc.heroHand[0], tc.heroHand[1])
         
@@ -128,12 +133,16 @@ class AutoPlayer(QObject):
         
     def _doAction(self, action, tc):
         """Do single action on the table. """
+        
+        # Build action string for logging
         actionString = ""
         for a in action:
             actionString += a + " "
         
         self.emit(SIGNAL('logMessage'), "Action: " + actionString)
+        # delay execution
         time.sleep(self.executionDelay)
+        
         if len(action) == 2:
             if action[1] == 'S':
                 self.mm.PostSB(tc.players.index(action[0]))
@@ -156,20 +165,26 @@ class AutoPlayer(QObject):
                 raise ValueError("Unknown action: " + action[1])
         else:
             # it's heroes turn
-            #-> show buttons
-            self._showHeroButtons(action[2], tc)
-
-            try:
-                result = self.mm.GetAction() # get performed action from manual mode
-            except: # TODO: Problem with stopping executin when waitin for action
-                self.aborted = True
-                return
-            button = result['button']
-            betsize = result['betsize']
-            self._resetButtons()
-            self._performHeroAction(button,betsize,tc)
-            self._compareActionWithTestCase(button, betsize, action, tc)
+            self._handleHeroAction(action,tc)
+            
         self.mm.Refresh()
+        
+    def _handleHeroAction(self,action, tc):
+        """ Set buttons for hero action and evaluate the performed action """
+
+        self._showHeroButtons(action[2], tc)
+
+        try:
+            # get performed action from manual mode
+            result = self.mm.GetAction()
+        except: # TODO: Problem with stopping execution when waiting for action
+            self.aborted = True
+            return
+        button = result['button']
+        betsize = result['betsize']
+        self._resetButtons()
+        self._performHeroAction(button,betsize,tc)
+        self._compareActionWithTestCase(button, betsize, action, tc)
             
     def _showHeroButtons(self, buttons, tc):
         for b in buttons:
@@ -184,7 +199,7 @@ class AutoPlayer(QObject):
 
         if button == 'F':
             self.mm.DoFold(tc.players.index(tc.hero))
-            # Abort testcase after bot fold
+            # Abort testcase after fold
             self.aborted = True
         elif button == 'C':
             self.mm.DoCall(tc.players.index(tc.hero))
@@ -219,15 +234,20 @@ class AutoPlayer(QObject):
             if a.isdigit():
                 expectedBetsize = a
 
+        #correct button pressed
         if button in expectedActions:
+            
             self.emit(SIGNAL('logMessage'), "Expected {0}, got {1}.".format(eaString, button), LogStyle.SUCCESS)
             
-            if button == "R" and betsize and tc.gtype == "NL":        
+            if button == "R" and betsize and tc.gtype == "NL":    
+                #correct bet size    
                 if (betsize == expectedBetsize or expectedBetsize == "Any"):          
                     self.emit(SIGNAL('logMessage'), "Expected R {0}, got R {1}.".format(expectedBetsize, betsize), LogStyle.SUCCESS)
+                #wrong bet size
                 else:
                     self.emit(SIGNAL('logMessage'), "Expected R {0}, got R {1}.".format(expectedBetsize, betsize), LogStyle.ERROR)
-                    self.testFailed = True       
+                    self.testFailed = True      
+        #wrong buttton pressed 
         else:
             self.emit(SIGNAL('logMessage'), "Expected {0}, got {1}.".format(eaString, button), LogStyle.ERROR)
             self.testFailed = True

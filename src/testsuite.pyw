@@ -1,30 +1,34 @@
 import sys
 import os
-import socket
 from ui_testsuite import Ui_TestSuite
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
 from parsers.tcparser import TestCaseParser, ParserException
-from autoplayer import AutoPlayer
 from testsuite_utility import ItemIcon, LogStyle
+from PyQt4.QtGui import QMainWindow, QKeySequence, QShortcut, QIcon, QFileDialog,\
+    QListWidgetItem, QApplication
+from PyQt4.QtCore import SIGNAL, Qt
+from test.testthread import TestThread
 
      
 class TestsuiteWindow(QMainWindow, Ui_TestSuite):
 
     def __init__(self, parent=None):
         super(TestsuiteWindow, self).__init__(parent)
-        self.setupUi(self)
-             
+        
+        self.setupUi(self)         
+        self._connectSignals()      
+        self._loadIcons()     
+
+
+    
+    def _connectSignals(self):
         self.connect(self.buttonAdd,SIGNAL("clicked()"), self.addTestCases)
         self.connect(self.buttonExecute,SIGNAL("clicked()"), self.startExecutingTestCases)
         self.connect(self.buttonExecuteAll,SIGNAL("clicked()"), self.startExecutingAllTestCases)
         self.connect(self.buttonStop,SIGNAL("clicked()"), self.stopExecuting)
+        self.connect(self.listTestCollection,SIGNAL("itemDoubleClicked(QListWidgetItem *)"), self.itemDoubleClicked)
         delKey = QShortcut(QKeySequence(Qt.Key_Delete), self.listTestCollection)
         self.connect(delKey, SIGNAL('activated()'), self.removeTestCases)
-          
-        self._loadIcons()     
 
-        
     def _loadIcons(self):
         self.iconSuccess = QIcon("images/circle_green") 
         self.iconError = QIcon("images/circle_error")
@@ -32,8 +36,21 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
         self.iconDefault = QIcon("images/circle_grey")
         
     def addTestCases(self):
+        if(self._isExecuting()):
+            self.stopExecuting()
         fnames = QFileDialog.getOpenFileNames(self, "Select test cases", ".", "Text files (*.txt)")
         self._addTestCasesToList(fnames)
+        
+    def _isExecuting(self):
+        # Testsuite is executing test case if execute button is disabled and test collection is not empty
+        return not self.buttonExecute.isEnabled() and self.listTestCollection.count() > 0
+    
+    
+    def itemDoubleClicked(self, item):
+        # open in default enditor
+        file = item.data(Qt.UserRole) # get file path
+        os.startfile(file, 'open')
+    
         
     def _addTestCasesToList(self, fnames):        
         for file in fnames: 
@@ -44,7 +61,7 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
                 tcParser = TestCaseParser(file)
                 tcParser.parse()
                 self.setItemIcon(item)
-                self.logMessage("Added file {0} to test collection".format(os.path.basename(file)))
+                self.logMessage("Added file {0}".format(os.path.basename(file)))
             except ParserException as e:
                 self.setItemIcon(item, ItemIcon.ERROR)
                 self.logMessage("Parsing error in file {0}. {1}".format(os.path.basename(file),str(e)),LogStyle.ERROR)
@@ -53,10 +70,13 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
             
         if self.listTestCollection.count() > 0:
             self.updateButtons(True)
+            self.listTestCollection.sortItems()
             
     def removeTestCases(self):
+        if(self._isExecuting()):
+            self.stopExecuting()
         for item in self.listTestCollection.selectedItems():
-            self.logMessage("Removed file {0} from test collection".format(item.text())) 
+            self.logMessage("Removed file {0}".format(item.text())) 
             self.listTestCollection.takeItem(self.listTestCollection.row(item))
             
     def startExecutingTestCases(self):
@@ -107,63 +127,6 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
         elif(icon == ItemIcon.SUCCESS):
             item.setIcon(self.iconSuccess)
 
-
-class TestThread(QThread):
-    def __init__(self, suite, items):
-        QThread.__init__(self)
-        self.suite = suite
-        self.items = items
-        executionDelay = self.suite.sliderSpeed.value() / 1000 # convert to seconds
-        self.autoPlayer = AutoPlayer(executionDelay)
-        self.connect(self.suite,SIGNAL("executionStopped"), self.executionStoppend)
-        self.connect(self.autoPlayer,SIGNAL("logMessage"), suite.logMessage)
-        self.connect(self.suite.sliderSpeed, SIGNAL('sliderReleased()'), self.updateExecutionSpeed)
-        self.executionStopped = False
-             
-    def __del__(self):
-        self.wait()
-
-    def run(self):
-        self.emit(SIGNAL('updateButtons'), False)
-        # set default icon for all items
-        for item in self.items:
-            self.emit(SIGNAL('setItemIcon'), item, ItemIcon.DEFAULT)
-        
-        # parse and execute test caeses    
-        for item in self.items:     
-            try:
-                
-                if self.executionStopped:
-                    return
-                
-                self.emit(SIGNAL('logMessage'), " => Test case : " + item.text(),LogStyle.TITLE)
-                file = item.data(Qt.UserRole)
-                tc = TestCaseParser(file)
-                tc.parse()
-                successful = self.autoPlayer.startTest(tc)
-                if successful:
-                    self.emit(SIGNAL('setItemIcon'), item, ItemIcon.SUCCESS)
-                else:
-                    self.emit(SIGNAL('setItemIcon'), item, ItemIcon.FAILED)
-            except ParserException as e:
-                self.emit(SIGNAL('setItemIcon'), item, ItemIcon.ERROR)
-                self.emit(SIGNAL('logMessage'),"Parsing error: " + str(e),LogStyle.ERROR)
-            except socket.error:
-                self.emit(SIGNAL('logMessage'),"Can't connect to Manual Mode",LogStyle.ERROR)
-                self.emit(SIGNAL('updateButtons'), True)
-                return
-            except Exception as e:
-                self.emit(SIGNAL('logMessage'),"Unknown error: " + str(e),LogStyle.ERROR)
-                
-        self.emit(SIGNAL('updateButtons'), True) 
-        
-    def executionStoppend(self):    
-        self.executionStopped = True
-        self.autoPlayer.stop()
-        
-    def updateExecutionSpeed(self):
-        executionDelay = self.suite.sliderSpeed.value() / 1000 # convert to seconds
-        self.autoPlayer.executionDelay = executionDelay
                
 def startGUI():
     app = QApplication(sys.argv)

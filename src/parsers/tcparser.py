@@ -108,7 +108,7 @@ class TestCaseParser(QObject):
         try:     
             config = SafeConfigParser()
             if(not os.path.isfile(self.tcfile)):
-                raise ParserException("Invalid file")
+                raise ParserException("Can't find file " + self.tcfile)
             
             config.read(self.tcfile)
 

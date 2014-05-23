@@ -1,55 +1,55 @@
-# To build:
-# python setup.py py2exe --includes sip
+# -*- coding: utf-8 -*-
 
-from distutils.core import setup
-import py2exe
+# A simple setup script to create an executable using PyQt4. This also
+# demonstrates the method for creating a Windows executable that does not have
+# an associated console.
+#
+# PyQt4app.py is a very simple type of PyQt4 application
+#
+# Run the build process by running the command 'python setup.py build'
+#
+# If everything works well you should find a subdirectory in the build
+# subdirectory that contains the files needed to run the application
 
-setup(
-    # The first three parameters are not required, if at least a
-    # 'version' is given, then a versioninfo resource is built from
-    # them and added to the executables.
-    version = "0.0.1",
-    description = "TestSuite",
-    name = "TestSuite",
-    #ascii = True,
-    options = {
-        'py2exe': {
-            'includes': [
-                'sip',
-                ],
-            'excludes': [
-                "pywin",
-                "pywin.debugger",
-                "pywin.debugger.dbgcon",
-                "pywin.dialogs",
-                "pywin.dialogs.list",
-                "Tkconstants",
-                "Tkinter",
-                "tcl",
-                'pyreadline',
-                'difflib',
-                'doctest',
-                'locale',
-                'optparse',
-                'pickle',
-                'calendar',
-                '_ssl',
-                'email',
-                'ctypes',
-                'pydoc_topics',
-                'pydoc',
-                #'urllib',
-                'inspect',
-                #'httplib',
-                'subprocess',
-                #'rfc822',
-                'ftplib',
+import sys
+from cx_Freeze import setup, Executable
 
+base = None
+if sys.platform == 'win32':
+    base = 'Win32GUI'
 
-                ]
-            }
-        },
+options = {
+    'build_exe': {
+		'include_files': [
+			'images/applications_games.png',
+            'images/circle_error.png',
+            'images/circle_green.png',
+            'images/circle_grey.png',
+            'images/circle_red.png',
+		],
+        'excludes' : [
+            'PyQt4.QtXml',
+            'PyQt4.QtTest',
+            'PyQt4.QtSvg',
+            'PyQt4.QtSql',
+            'PyQt4.QtScript',
+            'PyQt4.QtOpenGL',
+            'PyQt4.QtNetwork',
+            'PyQt4.Qsci',
+            '_bz2',
+            '_hashlib',
+            '_ssl'
+        ]
+    }
+}
 
-    # targets to build
-    windows = ["TestSuite.py"],
-    )
+executables = [
+    Executable('testsuite.pyw', base=base)
+]
+
+setup(name='TestSuite',
+      version='0.2',
+      description='TestSuite for manual mode',
+      options=options,
+      executables=executables
+      )
