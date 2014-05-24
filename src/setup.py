@@ -20,6 +20,7 @@ if sys.platform == 'win32':
 
 options = {
     'build_exe': {
+        'icon' : 'images/applications_games.ico',
 		'include_files': [
 			'images/applications_games.png',
             'images/circle_error.png',
@@ -39,7 +40,7 @@ options = {
             '_bz2',
             '_hashlib',
             '_ssl'
-        ]
+        ]       
     }
 }
 

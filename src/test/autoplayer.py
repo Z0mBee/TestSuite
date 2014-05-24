@@ -29,9 +29,11 @@ class AutoPlayer(QObject):
         self.aborted = True
         self.testFailed = True
         
+        
     def _performActions(self, tc):
         """ Perform preflop and postflop actions """
-           
+       
+        #TODO: Refactor check if execution was aborted   
         if self.aborted:
                 return;
         self.emit(SIGNAL('logMessage'), "--- Preflop --- Cards : {0}, {1}".format(tc.heroHand[0], tc.heroHand[1]))
@@ -39,7 +41,10 @@ class AutoPlayer(QObject):
             if self.aborted:
                     return;
             self._doAction(action,tc)
-                   
+        
+        if self.aborted:
+                    return;
+                           
         if tc.flopCards:
             self.emit(SIGNAL('logMessage'), "--- Flop --- Cards : {0}, {1}, {2}".format(tc.flopCards[0],tc.flopCards[1],tc.flopCards[2])) 
             self.mm.SetFlopCards(tc.flopCards[0], tc.flopCards[1], tc.flopCards[2])
@@ -47,7 +52,10 @@ class AutoPlayer(QObject):
                 if self.aborted:
                     return;
                 self._doAction(action, tc)
-                
+        
+        if self.aborted:
+                    return;
+                        
         if tc.turnCard:
             self.emit(SIGNAL('logMessage'), "--- Turn --- Card : {0}".format(tc.turnCard)) 
             self.mm.SetTurnCard(tc.turnCard)
@@ -55,7 +63,10 @@ class AutoPlayer(QObject):
                 if self.aborted:
                     return;
                 self._doAction(action, tc)
-            
+        
+        if self.aborted:
+                    return; 
+           
         if tc.riverCard:
             self.emit(SIGNAL('logMessage'), "--- River --- Card : {0}".format(tc.riverCard)) 
             self.mm.SetRiverCard(tc.riverCard)
@@ -224,9 +235,11 @@ class AutoPlayer(QObject):
             button = "R"
             
         # build expected action string without digits
-        for ea in expectedActions:
+        for i,ea in enumerate(expectedActions):  
             if not ea.isdigit():
-                eaString += ea +" "
+                if(i > 0): 
+                    eaString += ", "
+                eaString += ea
             
         # find bet size
         expectedBetsize = "Any" #default bet size is any

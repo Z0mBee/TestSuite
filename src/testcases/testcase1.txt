@@ -18,7 +18,7 @@ Actions = Saxum S, Erasmus B, Anders F, Ginger R, Bot can FCR do C, Crusoe F, Og
 
 [flop]
 Cards = 4d, 5s, 6c
-Actions = Ginger K, Bot can FKR do K
+Actions = Ginger K, Bot can FKR do R, Ginger R, Bot can FCR do R, Ginger C
 
 [turn]
 Card = 4s
