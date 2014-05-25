@@ -369,3 +369,14 @@
 [2014-05-25 00:34:11] Action: P1 B 
 [2014-05-25 00:34:12] Action: P2 F 
 [2014-05-25 00:34:12] === Executing stopped ===
+[2014-05-25 22:50:22] Added file markshmiter-tc.txt
+[2014-05-25 22:50:22] Added file table_configuration_example.txt
+[2014-05-25 22:50:22] Added file Test_01.txt
+[2014-05-25 22:50:22] Added file Test_02.txt
+[2014-05-25 22:50:22] Parsing error in file Test_03.txt. Invalid player balance: Bot 200 i
+[2014-05-25 22:50:22] Added file Test_04.txt
+[2014-05-25 22:50:22] Added file Test_05.txt
+[2014-05-25 22:50:22] Added file Test_06.txt
+[2014-05-25 22:50:22] Added file Test_08.txt
+[2014-05-25 22:50:22] Added file testcase1.txt
+[2014-05-25 22:50:22] Added file testcase2.txt

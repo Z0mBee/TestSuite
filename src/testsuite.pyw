@@ -158,28 +158,29 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
         self.connect(self.testThread,SIGNAL("updateExecutionButtons"), self.updateExecutionButtons)
         self.testThread.start()              
                 
-    def logMessage(self, msg, style = LogStyle.NORMAL):      
-        if(style == LogStyle.NORMAL):
-            self.textBrowserLog.append(msg)
-        elif(style == LogStyle.TITLE):
+    def logMessage(self, msg, style = None):      
+        
+        if(style == LogStyle.TITLE):
             self.textBrowserLog.append('<b>{0}</b>'.format(msg))
         elif(style == LogStyle.ERROR):
             self.textBrowserLog.append('<font color="#FF0000">{0}</font><font color="#000000"></font>'.format(msg))
         elif(style == LogStyle.SUCCESS):
             self.textBrowserLog.append('<font color="#009900">{0}</font><font color="#000000"></font>'.format(msg))
+        else:
+            self.textBrowserLog.append(msg)
         with open("ts.log","a") as file:
             timeStamp =datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S] ")
             file.write(timeStamp +msg + "\n")
             
-    def setItemIcon(self, item, icon = ItemIcon.DEFAULT):
-        if(icon == ItemIcon.DEFAULT):
-            item.setIcon(self.iconDefault)
-        elif(icon == ItemIcon.ERROR):
+    def setItemIcon(self, item, icon = None):    
+        if(icon == ItemIcon.ERROR):
             item.setIcon(self.iconError)
         elif(icon == ItemIcon.FAILED):
             item.setIcon(self.iconFailed)
         elif(icon == ItemIcon.SUCCESS):
             item.setIcon(self.iconSuccess)
+        else:
+            item.setIcon(self.iconDefault)
 
         
     def _updateLastDirectory(self, path):

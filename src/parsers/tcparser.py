@@ -81,14 +81,14 @@ class TestCaseParser(QObject):
             if len(actionParts) == 2:   
                 return re.match(r"[FKCRASB]{1}",actionParts[1])
             elif len(actionParts) == 3:   
-                return re.match(r"[0-9]+",actionParts[2]) and actionParts[1] == "R"
+                return re.match(r"[0-9.]+",actionParts[2]) and actionParts[1] == "R"
             # hero action
             elif len(actionParts) >= 4:
                 
                 if(actionParts[1] == "can" and actionParts[3] == "do" and re.match(r"[FKCRA]+",actionParts[2])):
                     lastAction = None
                     for a in actionParts[4:]:
-                        if (not re.match(r"[FKCRA]{1}",a)) and (not ((re.match(r"[0-9]+",a) and lastAction == "R"))):
+                        if (not re.match(r"[FKCRA]{1}",a)) and (not ((re.match(r"[0-9.]+",a) and lastAction == "R"))):
                             return False
                         lastAction = a
                     return True
@@ -100,7 +100,7 @@ class TestCaseParser(QObject):
     
     def _validPlayerBalance(self, playerBalance):
         """ Checks if it is a valid player balance """
-        return re.match(r"^[_a-zA-Z]{1}[\S]*[\s]*[0-9]+$",playerBalance)
+        return re.match(r"^[_a-zA-Z]{1}[\S]*[\s]*[0-9.]+$",playerBalance)
 
     def parse(self):
         """ Start parsing the config file"""
