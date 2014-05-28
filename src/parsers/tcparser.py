@@ -33,7 +33,7 @@ class TestCaseParser(QObject):
         self.tcfile = tcfile;
 
 
-    def _parseActions(self, actionLine):
+    def _parseActions(self, actionLine, preflop):
         """ Parse action line in single actions and check if all actions are valid"""
         
         actions = []
@@ -43,7 +43,7 @@ class TestCaseParser(QObject):
             
             # split by whitespace and remove empty whitespace parts
             actionParts = [a for a in action.split(' ') if a] 
-            if(not self._validAction(actionParts)):
+            if(not self._validAction(actionParts,preflop)):
                 raise ParserException("Invalid action: " + action)
             
             actions.append(actionParts)
@@ -69,7 +69,7 @@ class TestCaseParser(QObject):
                 break
                 
     
-    def _validAction(self, actionParts):
+    def _validAction(self, actionParts,preflop):
         """Checks if all parts of an action are valid"""
         
         if(len(actionParts) >= 2):
@@ -78,8 +78,11 @@ class TestCaseParser(QObject):
                 return False
             
             # opponent action
-            if len(actionParts) == 2:   
-                return re.match(r"[FKCRASB]{1}",actionParts[1])
+            if len(actionParts) == 2:  
+                if(preflop):
+                    return re.match(r"[FKCRASB]{1}",actionParts[1])
+                else:
+                    return re.match(r"[FKCRA]{1}",actionParts[1])
             elif len(actionParts) == 3:   
                 return re.match(r"[0-9.]+",actionParts[2]) and actionParts[1] == "R"
             # hero action
@@ -114,9 +117,9 @@ class TestCaseParser(QObject):
 
             self._parsePreflop(config)
             self._parsePostflop(config)
-                          
+            
             self._parseConfig(config)
-             
+                                  
         # map all exceptions to parser exception
         except Exception as e:
             raise ParserException(e)
@@ -125,7 +128,7 @@ class TestCaseParser(QObject):
         """Parse the preflop section"""
         
         #preflop section
-        self.pfActions = self._parseActions(config.get('preflop', 'actions'))
+        self.pfActions = self._parseActions(config.get('preflop', 'actions'),True)
         self.heroHand = [c.strip() for c in config.get('preflop', 'hand').split(',')]
         
         if len(self.heroHand) != 2:
@@ -141,10 +144,19 @@ class TestCaseParser(QObject):
             if len(playerAction) > 3:
                 self.hero = playerAction[0]
                 
+        if not self.hero:
+            raise ParserException("Could not find hero")
+        if len(self.players) < 2:
+            raise ParserException("Could not enough players")
+        if "S" not in self.pfActions[0]:
+            raise ParserException("First preflop action has to define small blind")
+           
         # put hero at pos 0
         for i in range(0, len(self.players) - self.players.index(self.hero)):
             p = self.players.pop()
             self.players.insert(0, p)
+        
+        
                 
         
     def _parsePostflop(self,config):
@@ -152,7 +164,7 @@ class TestCaseParser(QObject):
         
         #flop section
         if(config.has_section('flop')):
-            self.flopActions = self._parseActions(config.get('flop', 'actions'))
+            self.flopActions = self._parseActions(config.get('flop', 'actions'),False)
             self.flopCards = [c.strip() for c in config.get('flop', 'cards').split(',')]
             
             if len(self.flopCards) != 3:
@@ -166,7 +178,7 @@ class TestCaseParser(QObject):
     
         #turn section
         if(config.has_section('turn')):
-            self.turnActions = self._parseActions(config.get('turn', 'actions'))
+            self.turnActions = self._parseActions(config.get('turn', 'actions'),False)
             self.turnCard = config.get('turn', 'card')
             
             if(not self._validCard(self.turnCard)):
@@ -177,7 +189,7 @@ class TestCaseParser(QObject):
     
         #river section
         if(config.has_section('river')):
-            self.riverActions = self._parseActions(config.get('river', 'actions'))
+            self.riverActions = self._parseActions(config.get('river', 'actions'),False)
             self.riverCard = config.get('river', 'card')
             
             if(not self._validCard(self.riverCard)):
@@ -211,10 +223,14 @@ class TestCaseParser(QObject):
             if(config.has_option('table','balances')):
                 balances = config.get('table', 'balances').split(",")
                 
+                #parse player balances
                 for balance in balances: 
                     balance = balance.strip()   
                     if(not self._validPlayerBalance(balance)):
                         raise ParserException("Invalid player balance: " + balance) 
+                    playerBalance = balance.split()
+                    if(playerBalance[0] not in self.players):
+                        raise ParserException("Player isn't playing: " +playerBalance[0] ) 
                     self.balances.append(balance.split())
             
             

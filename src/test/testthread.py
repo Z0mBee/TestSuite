@@ -68,6 +68,7 @@ class TestThread(QThread):
             except Exception as e:
                 self.emit(SIGNAL('logMessage'),"Unknown error: " + str(e),LogStyle.ERROR)
                 errorTc += 1
+                self.emit(SIGNAL('setItemIcon'), item, ItemIcon.ERROR)
         
         self.emit(SIGNAL('logMessage'), " => Execution finished",LogStyle.TITLE)
         if(len(self.items) > 1):                 

@@ -240,7 +240,7 @@ class AutoPlayer(QObject):
                 if(i > 0): 
                     eaString += ", "
                 eaString += ea
-        if len(eaString) > 0:
+        if len(eaString) > 1:
             eaString = "(" + eaString + ")"       
             
         # find bet size

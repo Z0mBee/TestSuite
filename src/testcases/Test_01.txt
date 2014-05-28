@@ -1,21 +1,9 @@
 [table]
-sblind = 1
-bblind = 2
+sblind = 0.10
+bblind = 0.25
 gtype = NL
-balances = P0 200,P1 200,P2 200, P3 200, P4 200,P5 200,P6 200,P7 200, P8 200,Bot 200 
+balances = P5 89.13, P6 20.10, P7 19.62, P8 9.05, P0 29.30, P1 29.75, P2 25.25, P3 11.35, Hero 26.41
 
 [preflop]
-Hand = Ah, Th
-Actions = P0 S,P1 B,P2 F,P3 F,P4 F,P5 F,P6 F, P7 F,P8 F,Bot can FCRA do R 5,P0 F, P1 C 
-
-[flop]
-Cards = As, 3d, 6h
-Actions = P1 K, Bot can FKRA do K
-
-[turn]
-Card = 5h
-Actions = P1 K, Bot can FKRA do R 8
-
-[river]
-Card = Ks
-Actions = P1 K, Bot can FKRA do R 10
+Hand = Ah, 9s
+Actions = P0 B, P1 B, P2 F, P3 F, Hero can FCRA do R, P5 F, P6 F, P7 F, P8 F, P0 F, P1 F
