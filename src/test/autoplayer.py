@@ -236,10 +236,12 @@ class AutoPlayer(QObject):
             
         # build expected action string without digits
         for i,ea in enumerate(expectedActions):  
-            if not ea.isdigit():
+            if not ea.isdigit() and not "." in ea:
                 if(i > 0): 
                     eaString += ", "
                 eaString += ea
+        if len(eaString) > 0:
+            eaString = "(" + eaString + ")"       
             
         # find bet size
         expectedBetsize = "Any" #default bet size is any
