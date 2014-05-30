@@ -167,6 +167,8 @@ class AutoPlayer(QObject):
                 self.mm.DoFold(tc.players.index(action[0]))
             elif action[1] == 'K':
                 pass
+            elif action[1] == 'A':
+                self.mm.DoAllin(tc.players.index(action[0]))
             else:
                 raise ValueError("Unknown action: " + action[1])
         elif len(action) == 3:
@@ -262,7 +264,7 @@ class AutoPlayer(QObject):
                 else:
                     self.emit(SIGNAL('logMessage'), "Expected R {0}, got R {1}.".format(expectedBetsize, betsize), LogStyle.ERROR)
                     self.testFailed = True      
-        #wrong buttton pressed 
+        #wrong button pressed 
         else:
             self.emit(SIGNAL('logMessage'), "Expected {0}, got {1}.".format(eaString, button), LogStyle.ERROR)
             self.testFailed = True

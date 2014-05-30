@@ -1,5 +1,6 @@
 import os
 import re
+import shlex
 from configparser import SafeConfigParser
 from PyQt4.Qt import QObject
 
@@ -42,9 +43,17 @@ class TestCaseParser(QObject):
             action = action.replace(")","").replace("(","").strip()
             
             # split by whitespace and remove empty whitespace parts
-            actionParts = [a for a in action.split(' ') if a] 
+            actionParts = [a for a in shlex.split(action) if a] 
             if(not self._validAction(actionParts,preflop)):
                 raise ParserException("Invalid action: " + action)
+            
+            actionParts[0] = actionParts[0].replace("\"","") # remove quotes from name
+            
+            #check if expected hero action is in possible actions
+            if len(actionParts) > 3:
+                for a in actionParts[4:]:
+                    if (a in "FCKRA") and (a not in actionParts[2]):
+                        raise ParserException("Expected action is not in possible actions: " + action)
             
             actions.append(actionParts)
         return actions
@@ -74,7 +83,7 @@ class TestCaseParser(QObject):
         
         if(len(actionParts) >= 2):
             # name
-            if not re.match(r"[_a-zA-Z]{1}[\S]*", actionParts[0]):
+            if not re.match(r".*[a-zA-Z]{1}.*", actionParts[0]):
                 return False
             
             # opponent action
@@ -103,7 +112,7 @@ class TestCaseParser(QObject):
     
     def _validPlayerBalance(self, playerBalance):
         """ Checks if it is a valid player balance """
-        return re.match(r"^[_a-zA-Z]{1}[\S]*[\s]*[0-9.]+$",playerBalance)
+        return re.match(r"^(.*[a-zA-Z]{1}.*)[\s]*[0-9.]+$",playerBalance)
 
     def parse(self):
         """ Start parsing the config file"""
@@ -225,13 +234,13 @@ class TestCaseParser(QObject):
                 
                 #parse player balances
                 for balance in balances: 
-                    balance = balance.strip()   
+                    balance = balance.strip() 
                     if(not self._validPlayerBalance(balance)):
                         raise ParserException("Invalid player balance: " + balance) 
-                    playerBalance = balance.split()
+                    playerBalance = shlex.split(balance)
                     if(playerBalance[0] not in self.players):
                         raise ParserException("Player isn't playing: " +playerBalance[0] ) 
-                    self.balances.append(balance.split())
+                    self.balances.append(playerBalance)
             
             
 class ParserException(Exception):

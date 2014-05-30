@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'testsuite.ui'
 #
-# Created: Sat May 24 20:41:50 2014
+# Created: Fri May 30 14:24:00 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -27,6 +27,7 @@ class Ui_TestSuite(object):
     def setupUi(self, TestSuite):
         TestSuite.setObjectName(_fromUtf8("TestSuite"))
         TestSuite.resize(631, 508)
+        TestSuite.setAcceptDrops(True)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8("images/applications_games.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         TestSuite.setWindowIcon(icon)

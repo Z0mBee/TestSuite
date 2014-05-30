@@ -1,21 +1,17 @@
 [table]
-sblind = 1
-bblind = 2
+sblind = 0.01
+bblind = 0.02
 gtype = NL
-balances = P0 200,P1 200,P2 200, P3 200, P4 200,P5 200,P6 200,P7 200, P8 200,Bot 200 
+balances = Baer_lin 1.20, GercogQJs 2.66, Robertkarlsson 2.02, TripsDraw 2, ZomBee1 2, achapi 0.10, 2 2.26, smudlimudli 2.29
 
 [preflop]
-Hand = Ah, Th
-Actions = P0 S,P1 B,P2 F,P3 F,P4 F,P5 F,P6 F, P7 F,P8 F,Bot can FCRA do R 5,P0 F, P1 C 
+Hand = 3h, 3d
+Actions = ZomBee1 S, 2 B, TripsDraw R 0.07, Robertkarlsson F, smudlimudli F, Baer_lin F, GercogQJs F, achapi C, ZomBee1 can FCRA do C, 2 F
 
 [flop]
-Cards = As, 3d, 6h
-Actions = P1 K, Bot can FKRA do K
+Cards = Ts, Kc, 8c
+Actions = ZomBee1 can FRKA do K, TripsDraw K, achapi K
 
 [turn]
-Card = 5h
-Actions = P1 R 8, Bot can FCRA do C
-
-[river]
-Card = Ks
-Actions = P1 R 30, Bot can FCRA do F
+Card = Ad
+Actions = ZomBee1 can FKRA do K, TripsDraw K, achapi A, ZomBee1 can FCRA do F, TripsDraw C

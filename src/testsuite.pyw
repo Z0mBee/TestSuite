@@ -20,6 +20,33 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
         self._loadIcons()  
         self.testCollectionFile = None   
         self._lastDirectory = "."
+        
+    #===========================================================================
+    # def dragEnterEvent(self, event):
+    #     if event.mimeData().hasFormat("text/uri-list"):
+    #         event.accept()
+    #     else:
+    #         event.ignore()    
+    #         
+    #===========================================================================
+    def dragMoveEvent(self, event):
+        if event.mimeData().hasFormat("text/uri-list"):
+            if(event.mimeData().data("text/uri-list")[:4] == ".txt"):
+                event.accept()
+            else:
+                event.ignore()         
+        else:
+            event.ignore()
+        
+    def dropEvent(self, event):
+        if event.mimeData().hasFormat("text/uri-list"):
+            if(event.mimeData().data("text/uri-list")[:4] == ".txt"):
+                event.accept()
+            else:
+                event.ignore()         
+        else:
+            event.ignore()
+        
     
     def _connectSignals(self):
         
