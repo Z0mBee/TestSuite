@@ -21,29 +21,35 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
         self.testCollectionFile = None   
         self._lastDirectory = "."
         
-    #===========================================================================
-    # def dragEnterEvent(self, event):
-    #     if event.mimeData().hasFormat("text/uri-list"):
-    #         event.accept()
-    #     else:
-    #         event.ignore()    
-    #         
-    #===========================================================================
-    def dragMoveEvent(self, event):
-        if event.mimeData().hasFormat("text/uri-list"):
-            if(event.mimeData().data("text/uri-list")[:4] == ".txt"):
-                event.accept()
-            else:
-                event.ignore()         
+    def dragEnterEvent(self, event):
+        """ Drag enter mouse event"""
+        if event.mimeData().hasUrls:
+            event.accept()
         else:
             event.ignore()
-        
+
     def dropEvent(self, event):
-        if event.mimeData().hasFormat("text/uri-list"):
-            if(event.mimeData().data("text/uri-list")[:4] == ".txt"):
+        """ Drop mouse event. Accept if urls contain test cases or test collection."""
+        if event.mimeData().hasUrls:
+            event.setDropAction(Qt.CopyAction)
+            
+            files = []
+            tcFile = None
+            for url in event.mimeData().urls():
+                file = url.toLocalFile()
+                extension = os.path.splitext(file)[1]
+                if extension == ".txt":
+                    files.append(file)
+                elif extension == ".tc":
+                    tcFile = file
+            if tcFile:
                 event.accept()
+                self._loadTestCollectionFile(tcFile)
+            if files:
+                event.accept()
+                self._addTestCasesToList(files)  
             else:
-                event.ignore()         
+                event.ignore()       
         else:
             event.ignore()
         
@@ -239,21 +245,25 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
         outputFile = QFileDialog.getSaveFileName(self, "Select file", self._lastDirectory, "Test collection file (*.tc)")
         self._updateLastDirectory(outputFile)
         self._saveTestCollectionToFile(outputFile) 
+        
+    def _loadTestCollectionFile(self,inputFile):
+        fNames = []
+        with open(inputFile) as file:
+            for line in file:
+                fNames.append(line.replace("\n",""))
+        self.listTestCollection.clear()
+        self._addTestCasesToList(fNames)
+        self.testCollectionFile = inputFile
+        self.logMessage("Loaded test collection file " + os.path.basename(inputFile))
+        self.updateButtonsToListChange()
     
     def openTestCollection(self):
         """Open test collection file and load testcases"""
         inputFile = QFileDialog.getOpenFileName(self, "Select file", self._lastDirectory, "Test collection file (*.tc)")
         self._updateLastDirectory(inputFile)
         if(inputFile):
-            fNames = []
-            with open(inputFile) as file:
-                for line in file:
-                    fNames.append(line.replace("\n",""))
-            self.listTestCollection.clear()
-            self._addTestCasesToList(fNames)
-            self.testCollectionFile = inputFile
-            self.logMessage("Loaded test collection file " + os.path.basename(inputFile))
-            self.updateButtonsToListChange()
+            self._loadTestCollectionFile(inputFile)
+            
                
     def newTestCollection(self):
         self.listTestCollection.clear()

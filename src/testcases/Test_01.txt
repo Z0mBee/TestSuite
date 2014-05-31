@@ -1,9 +1,0 @@
-[table]
-sblind = 0.10
-bblind = 0.25
-gtype = NL
-balances = P5 89.13, P6 20.10, P7 19.62, P8 9.05, P0 29.30, P1 29.75, P2 25.25, P3 11.35, Hero 26.41
-
-[preflop]
-Hand = Ah, 9s
-Actions = P0 B, P1 B, P2 F, P3 F, Hero can FCRA do R, P5 F, P6 F, P7 F, P8 F, P0 F, P1 F
