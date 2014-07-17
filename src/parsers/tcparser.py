@@ -40,11 +40,16 @@ class TestCaseParser(QObject):
         actions = []
         for action in self._nextActionToken(actionLine):
             # remove parenthesis and whitespaces
-            action = action.replace(")","").replace("(","").strip()
+            action = action.strip()
             
             # split by whitespace and remove empty whitespace parts
             actionParts = [a for a in shlex.split(action) if a] 
-            if(not self._validAction(actionParts,preflop)):
+            
+            
+            for i in range(1,len(actionParts)):
+                actionParts[i] = actionParts[i].replace(")","").replace("(","")
+            
+            if(not self._validAction(actionParts,preflop,'"' in action)):
                 raise ParserException("Invalid action: " + action)
             
             actionParts[0] = actionParts[0].replace("\"","") # remove quotes from name
@@ -78,13 +83,16 @@ class TestCaseParser(QObject):
                 break
                 
     
-    def _validAction(self, actionParts,preflop):
+    def _validAction(self, actionParts,preflop,quotedName):
         """Checks if all parts of an action are valid"""
         
         if(len(actionParts) >= 2):
             # name
-            if not re.match(r".*[a-zA-Z]{1}.*", actionParts[0]):
-                return False
+            if quotedName:
+                return len(actionParts[0]) > 0
+            else:
+                if not re.match(r".*[a-zA-Z]{1}.*", actionParts[0]):
+                    return False
             
             # opponent action
             if len(actionParts) == 2:  
@@ -110,9 +118,12 @@ class TestCaseParser(QObject):
         """ Checks if the card is a valid poker card """
         return re.match(r"^[2-9TJQKA]{1}[hsdc]{1}$",card)
     
-    def _validPlayerBalance(self, playerBalance):
+    def _validPlayerBalance(self, playerBalance,quotedName):
         """ Checks if it is a valid player balance """
-        return re.match(r"^(.*[a-zA-Z]{1}.*)[\s]*[0-9.]+$",playerBalance)
+        if quotedName:
+            return re.match(r"^(.+)[\s]+[0-9.]+$",playerBalance)
+        else:
+            return re.match(r"^(.*[a-zA-Z]{1}.*)[\s]+[0-9.]+$",playerBalance)
 
     def parse(self):
         """ Start parsing the config file"""
@@ -235,7 +246,7 @@ class TestCaseParser(QObject):
                 #parse player balances
                 for balance in balances: 
                     balance = balance.strip() 
-                    if(not self._validPlayerBalance(balance)):
+                    if(not self._validPlayerBalance(balance, '"' in balance)):
                         raise ParserException("Invalid player balance: " + balance) 
                     playerBalance = shlex.split(balance)
                     if(playerBalance[0] not in self.players):
