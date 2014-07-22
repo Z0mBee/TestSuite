@@ -104,25 +104,36 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
         """User wants to edit the selected item"""
         if(self.listTestCollection.count() > 0):
             self.editTestcase(self.listTestCollection.selectedItems()[0])
+            
+    def _fnameInCollection(self,fname):
+        """ Check if file name is in test collection"""
+        items = [self.listTestCollection.item(i) for i in range(self.listTestCollection.count())]
+        for item in items:
+            if(fname == item.data(Qt.UserRole)):
+                return True
+        return False
         
            
     def _addTestCasesToList(self, fnames): 
         """Add all files to the list and parse them"""       
         for file in fnames: 
-                   
-            item = QListWidgetItem(os.path.basename(file))
-            item.setData(Qt.UserRole,file)
-            try:
-                tcParser = TestCaseParser(file)
-                tcParser.parse()
-                self.setItemIcon(item)
-                self.logMessage("Added file {0}".format(os.path.basename(file)))
-            except ParserException as e:
-                self.setItemIcon(item, ItemIcon.ERROR)
-                self.logMessage("Parsing error in file {0}. {1}".format(os.path.basename(file),str(e)),LogStyle.ERROR)
+            
+            if(self._fnameInCollection(file)):
+                self.logMessage("File {0} already in test collection".format(os.path.basename(file)))
+            else:            
+                item = QListWidgetItem(os.path.basename(file))
+                item.setData(Qt.UserRole,file)
+                try:
+                    tcParser = TestCaseParser(file)
+                    tcParser.parse()
+                    self.setItemIcon(item)
+                    self.logMessage("Added file {0}".format(os.path.basename(file)))
+                except ParserException as e:
+                    self.setItemIcon(item, ItemIcon.ERROR)
+                    self.logMessage("Parsing error in file {0}. {1}".format(os.path.basename(file),str(e)),LogStyle.ERROR)
     
-            self.listTestCollection.addItem(item)
-            self._updateLastDirectory(file) 
+                self.listTestCollection.addItem(item)
+                self._updateLastDirectory(file) 
             
         self.updateButtonsToListChange() 
         self.listTestCollection.sortItems()
@@ -130,7 +141,8 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
     def listSelectionChanged(self):
         """List selection changed -> update buttons based on selection """
         if(len(self.listTestCollection.selectedItems()) > 0):
-            self.buttonExecute.setEnabled(True)
+            if(not self._isExecuting()):
+                self.buttonExecute.setEnabled(True)
             self.buttonEdit.setEnabled(True)
             self.buttonRemove.setEnabled(True)
         else:
@@ -142,12 +154,19 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
         """Remove selected test cases from the list """
         if(self._isExecuting()):
             self.stopExecuting()
+            
+        newSelIndex = 0
+        if(len(self.listTestCollection.selectedItems()) > 0):
+            newSelIndex = self.listTestCollection.indexFromItem(self.listTestCollection.selectedItems()[0]).row() -1
+        
         for item in self.listTestCollection.selectedItems():
             self.logMessage("Removed file {0}".format(item.text())) 
             self.listTestCollection.takeItem(self.listTestCollection.row(item))
                
         if self.listTestCollection.count() > 0:
-            self.listTestCollection.item(self.listTestCollection.count()-1).setSelected(True)
+            if(newSelIndex < 0):
+                newSelIndex = 0
+            self.listTestCollection.item(newSelIndex).setSelected(True)
             
         self.updateButtonsToListChange() 
             
