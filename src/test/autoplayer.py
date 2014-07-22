@@ -1,4 +1,5 @@
 import time
+import re
 import xmlrpc.client
 from PyQt4.Qt import QObject, SIGNAL
 from testsuite_utility import LogStyle
@@ -17,8 +18,9 @@ class AutoPlayer(QObject):
     def startTest(self,tc,handNumber):
         
         self.testFailed = False 
-        self._initTable(tc, handNumber)
-        self._performActions(tc)
+        self.tc = tc
+        self._initTable(handNumber)
+        self._performActions()
         
         if self.testFailed:
             return False
@@ -30,9 +32,10 @@ class AutoPlayer(QObject):
         self.testFailed = True
         
         
-    def _performActions(self, tc):
+    def _performActions(self):
         """ Perform preflop and postflop actions """
-       
+    
+        tc = self.tc
         #TODO: Refactor check if execution was aborted   
         if self.aborted:
                 return;
@@ -40,7 +43,7 @@ class AutoPlayer(QObject):
         for action in tc.pfActions:
             if self.aborted:
                     return;
-            self._doAction(action,tc)
+            self._doAction(action)
         
         if self.aborted:
                     return;
@@ -51,7 +54,7 @@ class AutoPlayer(QObject):
             for action in tc.flopActions:
                 if self.aborted:
                     return;
-                self._doAction(action, tc)
+                self._doAction(action)
         
         if self.aborted:
                     return;
@@ -62,7 +65,7 @@ class AutoPlayer(QObject):
             for action in tc.turnActions:
                 if self.aborted:
                     return;
-                self._doAction(action, tc)
+                self._doAction(action)
         
         if self.aborted:
                     return; 
@@ -73,14 +76,15 @@ class AutoPlayer(QObject):
             for action in tc.riverActions:
                 if self.aborted:
                     return;
-                self._doAction(action, tc)
+                self._doAction(action)
     
-    def _initTable(self, tc, handNumber):
+    def _initTable(self, handNumber):
         """ Initialize the table with all start values"""
         
+        tc = self.tc
         self.aborted = False
         self._resetTable()
-        self._configureTable(tc)
+        self._configureTable()
         self._addPlayers(tc.players)
         
         #set hand number
@@ -121,8 +125,9 @@ class AutoPlayer(QObject):
             self.mm.SetButton(b, False)
         self.mm.Refresh()
             
-    def _configureTable(self, tc):
+    def _configureTable(self):
         """Configure table for this testcase """
+        tc = self.tc
 
         if tc.sblind:
             self.mm.SetSBlind(tc.sblind)
@@ -142,8 +147,10 @@ class AutoPlayer(QObject):
             for player, balance in tc.balances:
                 self.mm.SetBalance(tc.players.index(player), float(balance))
         
-    def _doAction(self, action, tc):
+    def _doAction(self, action):
         """Do single action on the table. """
+        
+        tc = self.tc
         
         # Build action string for logging
         actionString = ""
@@ -161,7 +168,7 @@ class AutoPlayer(QObject):
                 self.mm.PostBB(tc.players.index(action[0]))
             elif action[1] == 'C':
                 self.mm.DoCall(tc.players.index(action[0]))
-            elif action[1] == 'R':
+            elif action[1] == 'R':             
                 self.mm.DoRaise(tc.players.index(action[0]))
             elif action[1] == 'F':
                 self.mm.DoFold(tc.players.index(action[0]))
@@ -172,20 +179,20 @@ class AutoPlayer(QObject):
             else:
                 raise ValueError("Unknown action: " + action[1])
         elif len(action) == 3:
-            if action[1] == 'R':
+            if action[1] == 'R':               
                 self.mm.DoRaise(tc.players.index(action[0]),float(action[2]))
             else:
                 raise ValueError("Unknown action: " + action[1])
         else:
             # it's heroes turn
-            self._handleHeroAction(action,tc)
+            self._handleHeroAction(action)
             
         self.mm.Refresh()
         
-    def _handleHeroAction(self,action, tc):
+    def _handleHeroAction(self,action):
         """ Set buttons for hero action and evaluate the performed action """
 
-        self._showHeroButtons(action[2], tc)
+        self._showHeroButtons(action[2])
 
         try:
             # get performed action from manual mode
@@ -196,19 +203,21 @@ class AutoPlayer(QObject):
         button = result['button']
         betsize = result['betsize']
         self._resetButtons()
-        self._performHeroAction(button,betsize,tc)
-        self._compareActionWithTestCase(button, betsize, action, tc)
+        self._performHeroAction(button,betsize)
+        self._compareActionWithTestCase(button, betsize, action)
             
-    def _showHeroButtons(self, buttons, tc):
+    def _showHeroButtons(self, buttons):
         for b in buttons:
             # map button R to button A when game type is NL
-            if b == "R" and tc.gtype == "NL":
+            if b == "R" and self.tc.gtype == "NL":
                 self.mm.SetButton("A",True)
             else:
                 self.mm.SetButton(b, True)
     
-    def _performHeroAction(self, button, betsize,tc):
-        """ Perform hero action in manual mode"""     
+    def _performHeroAction(self, button, betsize):
+        """ Perform hero action in manual mode"""  
+        
+        tc = self.tc   
 
         if button == 'F':
             self.mm.DoFold(tc.players.index(tc.hero))
@@ -222,13 +231,13 @@ class AutoPlayer(QObject):
             self.mm.DoRaise(tc.players.index(tc.hero))
         elif button == 'A': # allin or swag
             if betsize:
-                self.mm.DoRaise(tc.players.index(tc.hero), float(betsize))
+                self.mm.DoRaise(tc.players.index(tc.hero),float(betsize))
             else:
                 self.mm.DoAllin(tc.players.index(tc.hero))
                 self.aborted = True # Abort testcase after all-in
         self.mm.Refresh()
         
-    def _compareActionWithTestCase(self, button, betsize, heroAction, tc):
+    def _compareActionWithTestCase(self, button, betsize, heroAction):
         
         expectedActions = heroAction[4:] # all possible hero actions
         eaString = ""
@@ -236,9 +245,9 @@ class AutoPlayer(QObject):
         if button == "A" and betsize:
             button = "R"
             
-        # build expected action string without digits
+        # build expected action string without numbers
         for i,ea in enumerate(expectedActions):  
-            if not ea.isdigit() and not "." in ea:
+            if not re.match(r"[0-9]+(.[0-9]+)?",ea): # is not number
                 if(i > 0): 
                     eaString += ", "
                 eaString += ea
@@ -248,7 +257,7 @@ class AutoPlayer(QObject):
         # find bet size
         expectedBetsize = "Any" #default bet size is any
         for a in expectedActions:
-            if a.isdigit():
+            if re.match(r"[0-9]+(.[0-9]+)?",a): # is number
                 expectedBetsize = a
 
         #correct button pressed
@@ -256,7 +265,7 @@ class AutoPlayer(QObject):
             
             self.emit(SIGNAL('logMessage'), "Expected {0}, got {1}.".format(eaString, button), LogStyle.SUCCESS)
             
-            if button == "R" and betsize and tc.gtype == "NL":    
+            if button == "R" and betsize and self.tc.gtype == "NL":    
                 #correct bet size    
                 if (betsize == expectedBetsize or expectedBetsize == "Any"):          
                     self.emit(SIGNAL('logMessage'), "Expected R {0}, got R {1}.".format(expectedBetsize, betsize), LogStyle.SUCCESS)

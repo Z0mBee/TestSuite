@@ -2,12 +2,8 @@
 sblind = 1
 bblind = 2
 gtype = NL
-balances = P0 200,P1 200,P2 200, P3 40, P4 200,P5 200,P6 200,Bot 200 ,P7 200, P8 200
+balances = Bot 200,P0 200,P2 200, P3 200, P4 200,P5 200,P6 200,P7 200, P8 200
 
 [preflop]
 Hand = Ah, Kh
-Actions = P0 S,P1 B,P2 F,P3 C,P4 F,P5 F,P6 F,Bot can FCRA do R 8, P7 F,P8 F,P0 F, P1 C, P3 C 
-
-[flop]
-Cards = Qc, Qs, 9d
-Actions = P1 K, P3 K,Bot can FKRA do K
+Actions = Bot S,P0 B,P2 F,P3 C,P4 F,P5 R 8,P6 F,P7 F,P8 F, Bot can FCRA do C, P0 R 20, P3 R 50,P5 F,Bot can FCRA do R 100,P0 R 150
