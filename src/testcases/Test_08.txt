@@ -2,6 +2,7 @@
 sblind = 1
 bblind = 2
 gtype = NL
+tournament = true
 balances = Bot 200,P0 200,P2 200, P3 200, P4 200,P5 200,P6 200,P7 200, P8 200
 
 [preflop]

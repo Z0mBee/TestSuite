@@ -120,7 +120,7 @@ class AutoPlayer(QObject):
             self.mm.SetFlopCards('NN', 'NN', 'NN')
             self.mm.SetTurnCard('NN')
             self.mm.SetRiverCard('NN')
-            self.mm.SetTournament(True)
+            self.mm.SetTournament(False)
         for b in 'FCKRA':
             self.mm.SetButton(b, False)
         self.mm.Refresh()
