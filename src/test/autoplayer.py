@@ -121,6 +121,7 @@ class AutoPlayer(QObject):
             self.mm.SetTurnCard('NN')
             self.mm.SetRiverCard('NN')
             self.mm.SetTournament(False)
+            self.mm.SetGType('NL')
         for b in 'FCKRA':
             self.mm.SetButton(b, False)
         self.mm.Refresh()
