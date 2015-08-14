@@ -1,17 +1,20 @@
 import socket
 from PyQt4.QtCore import QThread, SIGNAL, Qt
 from test.autoplayer import AutoPlayer
-from testsuite_utility import ItemIcon, LogStyle
+from testsuite_utility import  LogStyle
 from parsers.tcparser import TestCaseParser, ParserException
+from src.test.testcase import TestCaseStatus
 
 class TestThread(QThread):
-    def __init__(self, suite, items):
+    def __init__(self, suite, items, stopOnError, stopOnFail):
         QThread.__init__(self)
         self.suite = suite
         self.items = items
         executionDelay = self.suite.sliderSpeed.value() / 1000 # convert to seconds
         self.autoPlayer = AutoPlayer(executionDelay)
-        self.executionStopped = False
+        self.executionStopped = False       
+        self.stopOnError = stopOnError
+        self.stopOnFail = stopOnFail
         self._connectSignals()
                
     def _connectSignals(self):
@@ -23,7 +26,7 @@ class TestThread(QThread):
         self.emit(SIGNAL('updateExecutionButtons'), False)
         # set default icon for all items
         for item in self.items:
-            self.emit(SIGNAL('setItemIcon'), item, ItemIcon.DEFAULT)
+            self.emit(SIGNAL('updateItemStatus'), item, TestCaseStatus.UNTESTED)
         
         # parse and execute test caeses 
         handNumber = 1  
@@ -37,29 +40,35 @@ class TestThread(QThread):
                     return
                 
                 self.emit(SIGNAL('logMessage'), " => Test case : " + item.text(),LogStyle.TITLE)
-                file = item.data(Qt.UserRole) # get file name
+                self.emit(SIGNAL('displayItemDetails'), item)
+                tc = item.data(Qt.UserRole) # get file name
                 
                 #parse test case 
-                tc = TestCaseParser(file)
-                tc.parse()
+                tcp = TestCaseParser(tc.file)
+                tcp.parse()
                 
                 #start test
-                successful = self.autoPlayer.startTest(tc, handNumber)
+                successful = self.autoPlayer.startTest(tcp, handNumber)
                 
                 if self.executionStopped:
                     return
                 
                 if successful:
-                    self.emit(SIGNAL('setItemIcon'), item, ItemIcon.SUCCESS)
+                    self.emit(SIGNAL('updateItemStatus'), item, TestCaseStatus.SUCCESS)
                     successfulTc += 1
                 else:
-                    self.emit(SIGNAL('setItemIcon'), item, ItemIcon.FAILED)
+                    self.emit(SIGNAL('updateItemStatus'), item, TestCaseStatus.FAILED)
                     failedTc += 1
+                    if(self.stopOnFail):
+                      break
                 handNumber += 1
             except ParserException as e:
-                self.emit(SIGNAL('setItemIcon'), item, ItemIcon.ERROR)
+                self.emit(SIGNAL('updateItemStatus'), item, TestCaseStatus.ERROR)
+                self.emit(SIGNAL('displayItemDetails'), item)
                 self.emit(SIGNAL('logMessage'),"Parsing error: " + str(e),LogStyle.ERROR)
                 errorTc += 1
+                if(self.stopOnError):
+                  break
             except socket.error:
                 self.emit(SIGNAL('logMessage'),"Can't connect to Manual Mode",LogStyle.ERROR)
                 self.stopExecution()
@@ -68,7 +77,10 @@ class TestThread(QThread):
             except Exception as e:
                 self.emit(SIGNAL('logMessage'),"Unknown error: " + str(e),LogStyle.ERROR)
                 errorTc += 1
-                self.emit(SIGNAL('setItemIcon'), item, ItemIcon.ERROR)
+                self.emit(SIGNAL('updateItemStatus'), item, TestCaseStatus.ERROR)
+                self.emit(SIGNAL('displayItemDetails'), item)
+                if(self.stopOnError):
+                  break
         
         self.emit(SIGNAL('logMessage'), " => Execution finished",LogStyle.TITLE)
         if(len(self.items) > 1):                 
@@ -76,6 +88,7 @@ class TestThread(QThread):
                       .format(len(self.items),successfulTc,failedTc,errorTc),LogStyle.TITLE)
                 
         self.emit(SIGNAL('updateExecutionButtons'), True) 
+        self.emit(SIGNAL('displayItemDetails'), item)
         
     def stopExecution(self):    
         self.executionStopped = True

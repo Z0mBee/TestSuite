@@ -10,6 +10,8 @@ class TestCaseParser(QObject):
     def __init__(self, tcfile):
         QObject.__init__(self)
         
+        self.info = None
+        
         self.sblind = None
         self.bblind = None
         self.bbet = None
@@ -133,6 +135,8 @@ class TestCaseParser(QObject):
             if(not os.path.isfile(self.tcfile)):
                 raise ParserException("Can't find file " + self.tcfile)
             
+            self.readInfo()
+            
             config.read(self.tcfile)
 
             self._parsePreflop(config)
@@ -143,6 +147,16 @@ class TestCaseParser(QObject):
         # map all exceptions to parser exception
         except Exception as e:
             raise ParserException(e)
+          
+    def readInfo(self):
+      """ Read all comments from testcase and concatenate them to info"""
+      self.info = ""
+      with open(self.tcfile) as fp:
+        for line in fp:
+          if line[0] == "#":
+            self.info += (line[1:].rstrip()).rstrip('\n\r')
+      self.info = self.info.strip()
+      
         
     def _parsePreflop(self,config):
         """Parse the preflop section"""
