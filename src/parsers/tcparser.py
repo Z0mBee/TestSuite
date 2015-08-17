@@ -181,7 +181,7 @@ class TestCaseParser(QObject):
         if not self.hero:
             raise ParserException("Could not find hero")
         if len(self.players) < 2:
-            raise ParserException("Could not enough players")
+            raise ParserException("Not enough players")
         if "S" not in self.pfActions[0]:
             raise ParserException("First preflop action has to define small blind")
            
@@ -189,9 +189,7 @@ class TestCaseParser(QObject):
         for i in range(0, len(self.players) - self.players.index(self.hero)):
             p = self.players.pop()
             self.players.insert(0, p)
-        
-        
-                
+                        
         
     def _parsePostflop(self,config):
         """Parse all postflop sections"""
@@ -264,6 +262,10 @@ class TestCaseParser(QObject):
                         raise ParserException("Invalid player balance: " + balance) 
                     playerBalance = shlex.split(balance)
                     if(playerBalance[0] not in self.players):
+                      # if hero action is last action and preflop only -> add remaining players
+                      if(self.pfActions[-1][0] == self.hero and len(self.flopActions) == 0):
+                        self.players.insert(self.players.index(self.hero) + 1, playerBalance[0])          
+                      else:  
                         raise ParserException("Player isn't playing: " +playerBalance[0] ) 
                     self.balances.append(playerBalance)
             

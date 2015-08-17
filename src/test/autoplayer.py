@@ -3,6 +3,7 @@ import re
 import xmlrpc.client
 from PyQt4.Qt import QObject, SIGNAL
 from testsuite_utility import LogStyle
+from parsers.tcparser import ParserException
 
 class AutoPlayer(QObject):
     """ Connects to manual mode, configures the table and peforms actions."""
@@ -117,11 +118,14 @@ class AutoPlayer(QObject):
             self.mm.SetBalance(c, 1000.0)
             self.mm.SetBet(c, 0.0)
             self.mm.SetPot(0.0)
-            self.mm.SetFlopCards('NN', 'NN', 'NN')
-            self.mm.SetTurnCard('NN')
-            self.mm.SetRiverCard('NN')
-            self.mm.SetTournament(False)
-            self.mm.SetGType('NL')
+            
+        self.mm.SetFlopCards('NN', 'NN', 'NN')
+        self.mm.SetTurnCard('NN')
+        self.mm.SetRiverCard('NN')
+        self.mm.SetTournament(False)
+        self.mm.SetGType('NL')
+        self.mm.SetNetwork(' ')
+        
         for b in 'FCKRA':
             self.mm.SetButton(b, False)
         self.mm.Refresh()
@@ -232,6 +236,8 @@ class AutoPlayer(QObject):
             self.mm.DoRaise(tc.players.index(tc.hero))
         elif button == 'A': # allin or swag
             if betsize:
+                if not re.match(r"[0-9]+(.[0-9]+)?", betsize):
+                  raise ParserException("Invalid bet size: {0}".format(betsize))
                 self.mm.DoRaise(tc.players.index(tc.hero),float(betsize))
             else:
                 self.mm.DoAllin(tc.players.index(tc.hero))
@@ -268,7 +274,7 @@ class AutoPlayer(QObject):
             
             if button == "R" and betsize and self.tc.gtype == "NL":    
                 #correct bet size    
-                if (betsize == expectedBetsize or expectedBetsize == "Any"):          
+                if (expectedBetsize == "Any" or float(betsize) == float(expectedBetsize)):          
                     self.emit(SIGNAL('logMessage'), "Expected R {0}, got R {1}.".format(expectedBetsize, betsize), LogStyle.SUCCESS)
                 #wrong bet size
                 else:

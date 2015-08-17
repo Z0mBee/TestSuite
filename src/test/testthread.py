@@ -74,13 +74,13 @@ class TestThread(QThread):
                 self.stopExecution()
                 self.emit(SIGNAL('updateExecutionButtons'), True) 
                 return
-            except Exception as e:
+            '''except Exception as e:
                 self.emit(SIGNAL('logMessage'),"Unknown error: " + str(e),LogStyle.ERROR)
                 errorTc += 1
                 self.emit(SIGNAL('updateItemStatus'), item, TestCaseStatus.ERROR)
                 self.emit(SIGNAL('displayItemDetails'), item)
                 if(self.stopOnError):
-                  break
+                  break'''
         
         self.emit(SIGNAL('logMessage'), " => Execution finished",LogStyle.TITLE)
         if(len(self.items) > 1):                 

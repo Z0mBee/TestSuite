@@ -324,13 +324,13 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
     def logMessage(self, msg, style = None):      
         
         if(style == LogStyle.TITLE):
-            self.textBrowserLog.append('<b>{0}</b>'.format(msg))
+            self.textBrowserLog.append('<font color="#000000"><b>{0}</b></font>'.format(msg))
         elif(style == LogStyle.ERROR):
-            self.textBrowserLog.append('<font color="#FF0000">{0}</font><font color="#000000"></font>'.format(msg))
+            self.textBrowserLog.append('<font color="#FF0000">{0}</font>'.format(msg))
         elif(style == LogStyle.SUCCESS):
-            self.textBrowserLog.append('<font color="#009900">{0}</font><font color="#000000"></font>'.format(msg))
+            self.textBrowserLog.append('<font color="#009900">{0}</font>'.format(msg))
         else:
-            self.textBrowserLog.append(msg)
+            self.textBrowserLog.append('<font color="#000000">{0}</font>'.format(msg))
         with open("ts.log","a") as file:
             timeStamp =datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S] ")
             file.write(timeStamp +msg + "\n")
