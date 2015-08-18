@@ -3,19 +3,23 @@ import re
 import xmlrpc.client
 from PyQt4.Qt import QObject, SIGNAL
 from testsuite_utility import LogStyle
-from parsers.tcparser import ParserException
+from src.parsers.tcparser import ParserException
 
 class AutoPlayer(QObject):
     """ Connects to manual mode, configures the table and peforms actions."""
 
-    def __init__(self, executionDelay):
+    def __init__(self, executionDelay, sync, pauseCond):
         QObject.__init__(self)
         self._connect()
         self.executionDelay = executionDelay
+        self.waitingForAction = False
+        self.sync = sync
+        self.pauseCond = pauseCond
+        self.executionPaused = False  
         
     def _connect(self):
         self.mm = xmlrpc.client.ServerProxy('http://localhost:9092') 
-
+        
     def startTest(self,tc,handNumber):
         
         self.testFailed = False 
@@ -27,54 +31,85 @@ class AutoPlayer(QObject):
             return False
         else: 
             return True
+          
+          
+    def pause(self):
+        self.executionPaused = True
+      
+    def unpause(self):
+        self.executionPaused = False
         
     def stop(self):
         self.aborted = True
         self.testFailed = True
         
+        # When waiting for action cancel get action with another proxy
+        if(self.waitingForAction):
+            proxy = xmlrpc.client.ServerProxy('http://localhost:9092') 
+            proxy.CancelGetAction()
+          
+          
+    def checkForPause(self):
+        """ Check if the pause flag has been set"""
+        self.sync.lock()
+        if(self.executionPaused):
+            self.pauseCond.wait(self.sync)
+        self.sync.unlock()
         
     def _performActions(self):
         """ Perform preflop and postflop actions """
     
-        tc = self.tc
-        #TODO: Refactor check if execution was aborted   
+        tc = self.tc   
+        self.checkForPause()
         if self.aborted:
-                return;
+            return;
+        
+        # Preflop
         self.emit(SIGNAL('logMessage'), "--- Preflop --- Cards : {0}, {1}".format(tc.heroHand[0], tc.heroHand[1]))
         for action in tc.pfActions:
+            self.checkForPause()
             if self.aborted:
                     return;
             self._doAction(action)
         
+        self.checkForPause()
         if self.aborted:
-                    return;
-                           
+            return;
+               
+        # Flop                   
         if tc.flopCards:
             self.emit(SIGNAL('logMessage'), "--- Flop --- Cards : {0}, {1}, {2}".format(tc.flopCards[0],tc.flopCards[1],tc.flopCards[2])) 
             self.mm.SetFlopCards(tc.flopCards[0], tc.flopCards[1], tc.flopCards[2])
             for action in tc.flopActions:
+                self.checkForPause()
                 if self.aborted:
                     return;
                 self._doAction(action)
         
+        self.checkForPause()
         if self.aborted:
-                    return;
-                        
+            return;
+        
+        # Turn             
         if tc.turnCard:
             self.emit(SIGNAL('logMessage'), "--- Turn --- Card : {0}".format(tc.turnCard)) 
             self.mm.SetTurnCard(tc.turnCard)
             for action in tc.turnActions:
+                self.checkForPause()
                 if self.aborted:
                     return;
                 self._doAction(action)
         
+        self.checkForPause()
         if self.aborted:
-                    return; 
+            return; 
            
+        # River
         if tc.riverCard:
             self.emit(SIGNAL('logMessage'), "--- River --- Card : {0}".format(tc.riverCard)) 
             self.mm.SetRiverCard(tc.riverCard)
             for action in tc.riverActions:
+                self.checkForPause()
                 if self.aborted:
                     return;
                 self._doAction(action)
@@ -117,8 +152,8 @@ class AutoPlayer(QObject):
             self.mm.SetCards(c, 'NN', 'NN')
             self.mm.SetBalance(c, 1000.0)
             self.mm.SetBet(c, 0.0)
-            self.mm.SetPot(0.0)
             
+        self.mm.SetPot(0.0)    
         self.mm.SetFlopCards('NN', 'NN', 'NN')
         self.mm.SetTurnCard('NN')
         self.mm.SetRiverCard('NN')
@@ -182,12 +217,12 @@ class AutoPlayer(QObject):
             elif action[1] == 'A':
                 self.mm.DoAllin(tc.players.index(action[0]))
             else:
-                raise ValueError("Unknown action: " + action[1])
+                raise ParserException("Unknown action: " + action[1])
         elif len(action) == 3:
             if action[1] == 'R':               
                 self.mm.DoRaise(tc.players.index(action[0]),float(action[2]))
             else:
-                raise ValueError("Unknown action: " + action[1])
+                raise ParserException("Unknown action: " + action[1])
         else:
             # it's heroes turn
             self._handleHeroAction(action)
@@ -201,10 +236,12 @@ class AutoPlayer(QObject):
 
         try:
             # get performed action from manual mode
+            self.waitingForAction = True;
             result = self.mm.GetAction()
-        except: # TODO: Problem with stopping execution when waiting for action
+        except:
             self.aborted = True
             return
+        self.waitingForAction = False;
         button = result['button']
         betsize = result['betsize']
         self._resetButtons()
@@ -237,7 +274,7 @@ class AutoPlayer(QObject):
         elif button == 'A': # allin or swag
             if betsize:
                 if not re.match(r"[0-9]+(.[0-9]+)?", betsize):
-                  raise ParserException("Invalid bet size: {0}".format(betsize))
+                    raise ParserException("Invalid bet size: {0}".format(betsize))
                 self.mm.DoRaise(tc.players.index(tc.hero),float(betsize))
             else:
                 self.mm.DoAllin(tc.players.index(tc.hero))

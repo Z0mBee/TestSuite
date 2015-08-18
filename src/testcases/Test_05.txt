@@ -1,9 +1,11 @@
-# My first test case
+# Test Test
+
 [table]
 sblind = 1
 bblind = 2
-#gtype = NL
-balances=bot 2000
+gtype = NL
+balances =  P0 200, Bot 200,P2 200, P3 200, P4 200, P5 200
+
 [preflop]
-Hand = 9c, 6h
-Actions = bot S, P1 B, P2 R 4, P3 F,  bot can FRCA do A
+Hand = Kh, Ts
+Actions = P0 S, Bot B, P2 F, P3 F, P4 F, P5 C, P1 F, Bot can FKRA do R

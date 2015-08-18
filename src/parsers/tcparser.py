@@ -149,13 +149,13 @@ class TestCaseParser(QObject):
             raise ParserException(e)
           
     def readInfo(self):
-      """ Read all comments from testcase and concatenate them to info"""
-      self.info = ""
-      with open(self.tcfile) as fp:
-        for line in fp:
-          if line[0] == "#":
-            self.info += (line[1:].rstrip()).rstrip('\n\r')
-      self.info = self.info.strip()
+        """ Read all comments from testcase and concatenate them to info"""
+        self.info = ""
+        with open(self.tcfile) as fp:
+            for line in fp:
+                if line[0] == "#":
+                    self.info += (line[1:].rstrip()).rstrip('\n\r')
+            self.info = self.info.strip()
       
         
     def _parsePreflop(self,config):
@@ -262,11 +262,11 @@ class TestCaseParser(QObject):
                         raise ParserException("Invalid player balance: " + balance) 
                     playerBalance = shlex.split(balance)
                     if(playerBalance[0] not in self.players):
-                      # if hero action is last action and preflop only -> add remaining players
-                      if(self.pfActions[-1][0] == self.hero and len(self.flopActions) == 0):
-                        self.players.insert(self.players.index(self.hero) + 1, playerBalance[0])          
-                      else:  
-                        raise ParserException("Player isn't playing: " +playerBalance[0] ) 
+                        # if hero action is last action and preflop only -> add remaining players
+                        if(self.pfActions[-1][0] == self.hero and len(self.flopActions) == 0):
+                            self.players.insert(self.players.index(self.hero) + 1, playerBalance[0])          
+                        else:  
+                            raise ParserException("Player isn't playing: " +playerBalance[0] ) 
                     self.balances.append(playerBalance)
             
             
