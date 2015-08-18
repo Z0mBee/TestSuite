@@ -49,8 +49,8 @@ executables = [
 ]
 
 setup(name='TestSuite',
-      version='0.2',
-      description='TestSuite for manual mode',
+      version='2.2',
+      description='TestSuite for Manual Mode',
       options=options,
       executables=executables
       )

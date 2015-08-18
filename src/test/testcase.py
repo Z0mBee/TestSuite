@@ -4,11 +4,11 @@ class TestCase:
     '''
 
     def __init__(self, fileName, file):
-      self.fileName = fileName
-      self.file = file
-      self.status = TestCaseStatus.UNTESTED
-      self.info = None
-      self.hand = None
+        self.fileName = fileName
+        self.file = file
+        self.status = TestCaseStatus.UNTESTED
+        self.info = None
+        self.hand = None
       
       
 class TestCaseStatus:
