@@ -1,5 +1,5 @@
 from PyQt4.QtCore import QThread, SIGNAL, Qt
-from src.test.testcase import  TestCase
+from test.testcase import  TestCase
 from PyQt4.Qt import QListWidgetItem
 from os.path import os
 
@@ -27,6 +27,7 @@ class ParseThread(QThread):
                 self.emit(SIGNAL('logMessage'), "Added file {0}".format(os.path.basename(file))) 
                 self.parserHelper.parseListItem(item)
                 self.emit(SIGNAL('setItemIcon'), item, tc.status)
+        self.emit(SIGNAL('sortListAndUpdateButtons'))
                 
     def _fnameInCollection(self,fname):
         """ Check if file name is in test collection"""

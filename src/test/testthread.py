@@ -2,8 +2,8 @@ import socket
 from PyQt4.QtCore import QThread, SIGNAL, Qt, QWaitCondition, QMutex
 from test.autoplayer import AutoPlayer
 from testsuite_utility import  LogStyle
-from src.parsers.tcparser import TestCaseParser, ParserException
-from src.test.testcase import TestCaseStatus
+from parsers.tcparser import TestCaseParser, ParserException
+from test.testcase import TestCaseStatus
 
 class TestThread(QThread):
     

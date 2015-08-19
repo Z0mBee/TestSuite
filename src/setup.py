@@ -21,13 +21,6 @@ if sys.platform == 'win32':
 options = {
     'build_exe': {
         'icon' : 'images/applications_games.ico',
-		'include_files': [
-			'images/applications_games.png',
-            'images/circle_error.png',
-            'images/circle_green.png',
-            'images/circle_grey.png',
-            'images/circle_red.png',
-		],
         'excludes' : [
             'PyQt4.QtXml',
             'PyQt4.QtTest',

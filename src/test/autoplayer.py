@@ -3,7 +3,7 @@ import re
 import xmlrpc.client
 from PyQt4.Qt import QObject, SIGNAL
 from testsuite_utility import LogStyle
-from src.parsers.tcparser import ParserException
+from parsers.tcparser import ParserException
 
 class AutoPlayer(QObject):
     """ Connects to manual mode, configures the table and peforms actions."""

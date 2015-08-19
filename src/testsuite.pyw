@@ -8,9 +8,9 @@ from PyQt4.QtGui import QMainWindow, QKeySequence, QShortcut, QIcon, QFileDialog
 from PyQt4.QtCore import SIGNAL, Qt
 from test.testthread import TestThread
 from PyQt4.Qt import QSettings
-from src.test.testcase import TestCaseStatus
-from src.parsers.parsethread import ParseThread
-from src.parsers.parserhelper import ParserHelper
+from test.testcase import TestCaseStatus
+from parsers.parsethread import ParseThread
+from parsers.parserhelper import ParserHelper
 
      
 class TestsuiteWindow(QMainWindow, Ui_TestSuite):
@@ -145,8 +145,10 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
         if(len(self.listTestCollection.selectedItems()) == 0):
             item.setSelected(True)   
         self._updateLastDirectory(tc.file)    
-        self.updateButtonsToListChange() 
+            
+    def sortListAndUpdateButtons(self):
         self.listTestCollection.sortItems()
+        self.updateButtonsToListChange()
            
     def _addTestCasesToList(self, fnames): 
         """Add all files to the list and parse them"""   
@@ -157,7 +159,8 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
         
         self.parseThread = ParseThread(fnames, self.listTestCollection, self.parserHelper)
         self.connect(self.parseThread,SIGNAL("logMessage"), self.logMessage)
-        self.connect(self.parseThread,SIGNAL("addItemToList"), self.addItemToList)   
+        self.connect(self.parseThread,SIGNAL("addItemToList"), self.addItemToList)  
+        self.connect(self.parseThread,SIGNAL("sortListAndUpdateButtons"), self.sortListAndUpdateButtons)   
         self.connect(self.parseThread,SIGNAL("setItemIcon"), self.setItemIcon)     
         self.parseThread.start()
         
@@ -195,8 +198,8 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
                 item = self.listTestCollection.selectedItems()[0]
                 if(not self._isExecuting()):
                     self.parserHelper.parseListItem(item)
-                    self.setItemIcon(item, item.data(Qt.UserRole).status)
-                    self.displayItemDetails(item)
+                self.setItemIcon(item, item.data(Qt.UserRole).status)
+                self.displayItemDetails(item)
         else:
             self.buttonExecute.setEnabled(False)
             self.buttonEdit.setEnabled(False)

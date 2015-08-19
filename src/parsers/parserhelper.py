@@ -1,7 +1,7 @@
 from PyQt4.Qt import Qt, SIGNAL, QObject
-from src.parsers.tcparser import TestCaseParser, ParserException
-from src.testsuite_utility import LogStyle
-from src.test.testcase import TestCaseStatus
+from parsers.tcparser import TestCaseParser, ParserException
+from testsuite_utility import LogStyle
+from test.testcase import TestCaseStatus
 
 class ParserHelper(QObject):
 
