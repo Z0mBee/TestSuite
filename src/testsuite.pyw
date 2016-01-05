@@ -4,13 +4,14 @@ import datetime
 from ui_testsuite import Ui_TestSuite
 from testsuite_utility import LogStyle
 from PyQt4.QtGui import QMainWindow, QKeySequence, QShortcut, QIcon, QFileDialog,\
-     QApplication
+     QApplication, QPixmap
 from PyQt4.QtCore import SIGNAL, Qt
 from test.testthread import TestThread
 from PyQt4.Qt import QSettings
 from test.testcase import TestCaseStatus
 from parsers.parsethread import ParseThread
 from parsers.parserhelper import ParserHelper
+from test.pingthread import PingThread
 
      
 class TestsuiteWindow(QMainWindow, Ui_TestSuite):
@@ -27,6 +28,7 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
         self.parseThread = None
         self.executionPaused = False
         self.readSettings()      
+        self._startPingThread()
         
     def closeEvent(self, evnt):    
         self.writeSettings();
@@ -142,8 +144,10 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
         """ Add item to test collection"""    
         tc = item.data(Qt.UserRole)
         self.listTestCollection.addItem(item)
-        if(len(self.listTestCollection.selectedItems()) == 0):
+        if(len(self.listTestCollection.selectedItems()) <= 1):
+            self.listTestCollection.clearSelection();
             item.setSelected(True)   
+        self.labelTestCases.setText(str(self.listTestCollection.count()))
         self._updateLastDirectory(tc.file)    
             
     def sortListAndUpdateButtons(self):
@@ -167,7 +171,6 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
     def displayItemDetails(self, item):
         """ Display the item details"""
         tc = item.data(Qt.UserRole)
-        self.labelName.setText(tc.fileName)
         if(tc.hand and len(tc.hand) == 2):
             self.labelHand.setText(tc.hand[0] + " " + tc.hand[1])
         self.labelName.setText(tc.fileName)
@@ -185,6 +188,11 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
             self.labelStatus.setText("Untested")
             self.labelStatus.setStyleSheet("QLabel { color : black; }");
       
+    def resetItemDetails(self):
+        self.labelName.setText("")
+        self.labelHand.setText("")
+        self.textInfo.setText("")
+        self.labelStatus.setText("")
             
     def listSelectionChanged(self):
         """List selection changed -> update buttons based on selection """
@@ -213,6 +221,8 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
           
         self.logMessage("Removed all files")
         self.listTestCollection.clear()
+        self.resetItemDetails()
+        self.labelTestCases.setText(str(self.listTestCollection.count()))
         self.updateButtonsToListChange()
       
             
@@ -229,11 +239,15 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
             self.logMessage("Removed file {0}".format(item.text())) 
             self.listTestCollection.takeItem(self.listTestCollection.row(item))
                
+        if self.listTestCollection.count() == 0:
+          self.resetItemDetails()       
+               
         if self.listTestCollection.count() > 0:
             if(newSelIndex < 0):
                 newSelIndex = 0
             self.listTestCollection.item(newSelIndex).setSelected(True)
             
+        self.labelTestCases.setText(str(self.listTestCollection.count()))
         self.updateButtonsToListChange() 
             
     def startExecutingTestCases(self):
@@ -333,6 +347,19 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
                 
         self.testThread.start()              
                 
+    def updateConnectionStatus(self, isConnected):
+        if(isConnected):
+            pixmap = QPixmap("images/circle_green")
+            self.imageConnectionStatus.setPixmap(pixmap)
+        else:
+            pixmap = QPixmap("images/circle_red")
+            self.imageConnectionStatus.setPixmap(pixmap)
+                
+    def _startPingThread(self):            
+        self.pingThread = PingThread()
+        self.connect(self.pingThread,SIGNAL("updateConnectionStatus"), self.updateConnectionStatus)             
+        self.pingThread.start()                          
+                
     def logMessage(self, msg, style = None):      
         
         if(style == LogStyle.TITLE):
@@ -392,6 +419,7 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
             with open(outputFile,'w') as file:
                 file.write(tcContent)
             self.testCollectionFile = outputFile
+            self.labelTestCollection.setText(os.path.basename(outputFile))
             self.logMessage("Saved test collection file " + os.path.basename(outputFile))
     
     def saveAsTestCollection(self):       
@@ -410,7 +438,8 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
             self.logMessage("Loaded test collection file " + os.path.basename(inputFile))
         else:
             self.logMessage("Addded test collection file " + os.path.basename(inputFile))
-          
+            
+        self.labelTestCollection.setText(os.path.basename(inputFile))  
         self._addTestCasesToList(fNames)
         self.updateButtonsToListChange()
     
@@ -425,6 +454,8 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
     def newTestCollection(self):
         self.listTestCollection.clear()
         self.testCollectionFile = None
+        self.labelTestCollection.setText("")  
+        self.labelTestCases.setText("")
         self.logMessage("Created new test collection file")
         self.updateButtonsToListChange()
         

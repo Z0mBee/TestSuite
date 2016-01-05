@@ -141,10 +141,14 @@ class AutoPlayer(QObject):
             
         self.mm.SetDealer(tc.players.index(dealer))
         
+        self.mm.Refresh()
+        
     def _resetTable(self):
         """Reset all table values"""
         
         self.mm.CancelGetAction()
+        
+        self._resetButtons()
         
         for c in range(0, 10):
             self.mm.SetActive(c, False)
@@ -160,10 +164,6 @@ class AutoPlayer(QObject):
         self.mm.SetTournament(False)
         self.mm.SetGType('NL')
         self.mm.SetNetwork(' ')
-        
-        for b in 'FCKRA':
-            self.mm.SetButton(b, False)
-        self.mm.Refresh()
             
     def _configureTable(self):
         """Configure table for this testcase """
@@ -329,7 +329,6 @@ class AutoPlayer(QObject):
             self.mm.SetSeated(c, True)
             self.mm.SetCards(c, 'BB', 'BB')
             self.mm.SetName(c, p)
-        self.mm.Refresh()
         
     def _resetButtons(self):
         for b in 'FCKRA':

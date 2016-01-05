@@ -26,7 +26,7 @@ class TestThread(QThread):
         self.connect(self.suite,SIGNAL("unpauseExecution"), self.unpauseExecution)
         self.connect(self.suite,SIGNAL("executionStopped"), self.stopExecution)
         self.connect(self.autoPlayer,SIGNAL("logMessage"), self.suite.logMessage)
-        self.connect(self.suite.sliderSpeed, SIGNAL('sliderReleased()'), self.updateExecutionSpeed)
+        self.connect(self.suite.sliderSpeed, SIGNAL('valueChanged(int)'), self.updateExecutionSpeed)
         
     def checkForPause(self):
         """ Check if the pause flag has been set"""
@@ -126,6 +126,6 @@ class TestThread(QThread):
         self.executionStopped = True
         self.autoPlayer.stop()
         
-    def updateExecutionSpeed(self):
-        executionDelay = self.suite.sliderSpeed.value() / 1000 # convert to seconds
+    def updateExecutionSpeed(self, value):
+        executionDelay = value / 1000 # convert to seconds
         self.autoPlayer.executionDelay = executionDelay
