@@ -7,7 +7,7 @@ from test.testcase import TestCaseStatus
 
 class TestThread(QThread):
     
-    def __init__(self, suite, items, stopOnError, stopOnFail):
+    def __init__(self, suite, items, stopOnError, stopOnFail, xmlRPCUrl):
         QThread.__init__(self)
         self.suite = suite
         self.items = items
@@ -15,7 +15,7 @@ class TestThread(QThread):
         self.sync = QMutex()
         self.pauseCond = QWaitCondition()
         self.executionPaused = False  
-        self.autoPlayer = AutoPlayer(executionDelay, self.sync, self.pauseCond)
+        self.autoPlayer = AutoPlayer(executionDelay, self.sync, self.pauseCond, xmlRPCUrl)
         self.executionStopped = False         
         self.stopOnError = stopOnError
         self.stopOnFail = stopOnFail
@@ -84,18 +84,13 @@ class TestThread(QThread):
                 if(self.stopOnError):
                     break
             except socket.error:
-                self.emit(SIGNAL('logMessage'),"Can't connect to Manual Mode",LogStyle.ERROR)
+                self.emit(SIGNAL('logMessage'),"Can't connect to player",LogStyle.ERROR)
                 self.stopExecution()
                 self.emit(SIGNAL('updateExecutionButtons'), True) 
                 return
             except Exception as e:
                 self.emit(SIGNAL('logMessage'),"Unknown error: " + str(e),LogStyle.ERROR)
                 raise         
-                '''errorTc += 1
-                self.emit(SIGNAL('updateItemStatus'), item, TestCaseStatus.ERROR)
-                self.emit(SIGNAL('displayItemDetails'), item)
-                if(self.stopOnError):
-                  break'''
         
         self.emit(SIGNAL('logMessage'), " => Execution finished",LogStyle.TITLE)
         if(len(self.items) > 1):                 

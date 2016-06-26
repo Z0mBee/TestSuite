@@ -5,13 +5,22 @@ from PyQt4.QtCore import QThread, SIGNAL
 class PingThread(QThread):
     """ Thread to ping Manual mode and test if connection is possible"""
     
-    def __init__(self):
+    def __init__(self, suite, xmlRPCUrl):
         QThread.__init__(self)
-        self.mm = xmlrpc.client.ServerProxy('http://localhost:9092') 
+        self.stopThread = False;
+        self.mm = xmlrpc.client.ServerProxy(xmlRPCUrl) 
+        self.suite = suite
+        self._connectSignals()
+        
+    def _connectSignals(self):
+        self.connect(self.suite,SIGNAL("updateXMLRPCUrl"), self.updateXMLRPCUrl)
+        
+    def updateXMLRPCUrl(self, xmlRPCUrl):    
+        self.mm = xmlrpc.client.ServerProxy(xmlRPCUrl) 
                
     def run(self):
         
-        while(True):
+        while(not self.stopThread):
           
             try:
                 

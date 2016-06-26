@@ -8,17 +8,18 @@ from parsers.tcparser import ParserException
 class AutoPlayer(QObject):
     """ Connects to manual mode, configures the table and peforms actions."""
 
-    def __init__(self, executionDelay, sync, pauseCond):
+    def __init__(self, executionDelay, sync, pauseCond, xmlRPCUrl):
         QObject.__init__(self)
+        self.xmlRPCUrl = xmlRPCUrl
         self._connect()
         self.executionDelay = executionDelay
         self.waitingForAction = False
         self.sync = sync
         self.pauseCond = pauseCond
-        self.executionPaused = False  
+        self.executionPaused = False      
         
     def _connect(self):
-        self.mm = xmlrpc.client.ServerProxy('http://localhost:9092') 
+        self.mm = xmlrpc.client.ServerProxy(self.xmlRPCUrl) 
         
     def startTest(self,tc,handNumber):
         
@@ -45,7 +46,7 @@ class AutoPlayer(QObject):
         
         # When waiting for action cancel get action with another proxy
         if(self.waitingForAction):
-            proxy = xmlrpc.client.ServerProxy('http://localhost:9092') 
+            proxy = xmlrpc.client.ServerProxy(self.xmlRPCUrl) 
             proxy.CancelGetAction()
           
           

@@ -12,6 +12,8 @@ from test.testcase import TestCaseStatus
 from parsers.parsethread import ParseThread
 from parsers.parserhelper import ParserHelper
 from test.pingthread import PingThread
+import xmlrpc
+import time
 
      
 class TestsuiteWindow(QMainWindow, Ui_TestSuite):
@@ -25,6 +27,7 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
         self._loadIcons()  
         self.testCollectionFile = None   
         self.testThread = None
+        self.pingThread = None
         self.parseThread = None
         self.executionPaused = False
         self.readSettings()      
@@ -32,6 +35,12 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
         
     def closeEvent(self, evnt):    
         self.writeSettings();
+        if(self.comboBoxPlayer.currentText() == "ZomBot"):
+            try:
+                proxy = xmlrpc.client.ServerProxy(self.getXMLRPCPlayerUrl()) 
+                proxy.Quit()
+            except:
+                return
         
     def dragEnterEvent(self, event):
         """ Drag enter mouse event"""
@@ -99,6 +108,7 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
         
         #others
         self.connect(self.parserHelper,SIGNAL("logMessage"), self.logMessage)
+        self.connect(self.comboBoxPlayer,SIGNAL("currentIndexChanged(int)"), self.comboBoxPlayerSelectionChanged)
 
     def _loadIcons(self):
         self.iconSuccess = QIcon("images/circle_green") 
@@ -153,6 +163,14 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
     def sortListAndUpdateButtons(self):
         self.listTestCollection.sortItems()
         self.updateButtonsToListChange()
+        
+    def comboBoxPlayerSelectionChanged(self, currentIndex):
+        
+        if(self.pingThread and self.pingThread.isRunning()):       
+            self.emit(SIGNAL('updateXMLRPCUrl'), self.getXMLRPCPlayerUrl())
+        
+        if(self._isExecuting()):
+            self.stopExecuting()
            
     def _addTestCasesToList(self, fnames): 
         """Add all files to the list and parse them"""   
@@ -240,7 +258,7 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
             self.listTestCollection.takeItem(self.listTestCollection.row(item))
                
         if self.listTestCollection.count() == 0:
-          self.resetItemDetails()       
+            self.resetItemDetails()       
                
         if self.listTestCollection.count() > 0:
             if(newSelIndex < 0):
@@ -340,23 +358,29 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
             self. logMessage("Test is still running", LogStyle.ERROR)
             return;
         
-        self.testThread = TestThread(self,items, self.checkBoxStopOnError.isChecked(), self.checkBoxStopWhenFailed.isChecked())
+        self.testThread = TestThread(self,items, self.checkBoxStopOnError.isChecked(), self.checkBoxStopWhenFailed.isChecked(), self.getXMLRPCPlayerUrl())
         self.connect(self.testThread,SIGNAL("logMessage"), self.logMessage)
         self.connect(self.testThread,SIGNAL("updateItemStatus"), self.updateItemStatus)
         self.connect(self.testThread,SIGNAL("updateExecutionButtons"), self.updateExecutionButtons)
                 
         self.testThread.start()              
                 
-    def updateConnectionStatus(self, isConnected):
+    def updateConnectionStatus(self, isConnected = False):
         if(isConnected):
             pixmap = QPixmap("images/circle_green")
             self.imageConnectionStatus.setPixmap(pixmap)
         else:
             pixmap = QPixmap("images/circle_red")
             self.imageConnectionStatus.setPixmap(pixmap)
+            
+    def getXMLRPCPlayerUrl(self):
+        if(self.comboBoxPlayer.currentText() == "ZomBot"):
+            return "http://localhost:9093/TestSuite.rem";
+        else:
+            return "http://localhost:9092";
                 
     def _startPingThread(self):            
-        self.pingThread = PingThread()
+        self.pingThread = PingThread(self, self.getXMLRPCPlayerUrl())
         self.connect(self.pingThread,SIGNAL("updateConnectionStatus"), self.updateConnectionStatus)             
         self.pingThread.start()                          
                 
@@ -469,6 +493,9 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
             self.move(settings.value("pos"))
         settings.endGroup()  
           
+        if settings.value("playerComboBoxIndex"):
+            self.comboBoxPlayer.setCurrentIndex(settings.value("playerComboBoxIndex"))
+            
         self._lastDirectory = settings.value("lastDirectory",".")
         self.sliderSpeed.setValue(settings.value("executionSpeed", 200))
         self.checkBoxStopOnError.setChecked(True  if settings.value("stopOnError") == "true" else False) 
@@ -481,6 +508,7 @@ class TestsuiteWindow(QMainWindow, Ui_TestSuite):
         settings.setValue("size", self.size())
         settings.setValue("pos", self.pos())
         settings.endGroup()
+        settings.setValue("playerComboBoxIndex", self.comboBoxPlayer.currentIndex())
         settings.setValue("executionSpeed", self.sliderSpeed.value())
         settings.setValue("lastDirectory", self._lastDirectory)
         settings.setValue("stopOnError", self.checkBoxStopOnError.isChecked()) 
